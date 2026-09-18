@@ -52,12 +52,12 @@
   ├─ 1. crypto.subtle 生成随机 256 位 AES-GCM 密钥 Key
   ├─ 2. 在本地内存中对明文/文件流执行加密 (IV: 12 字节)
   ├─ 3. 将加密后的密文 Ciphertext 发送给 Worker (D1/R2)
-  └─ 4. 生成分享 URL：https://drop.example.com/#/?code=X7K9P2#key={Key}
+  └─ 4. 生成分享 URL：https://drop.example.com/#/?code=X7K9P2&key={Key}
         │
-        └─► #key 仅存在于 URL Fragment，遵循 RFC 规范，浏览器绝对不会将其随 HTTP 头发送给服务器
+        └─► key 位于 URL Fragment 内的 query 参数（&key=），遵循 RFC 规范，浏览器绝对不会将其随 HTTP 头发送给服务器
 
 [收件客户端]
-  ├─ 1. 打开带 #key={Key} 的链接，从 location.hash 解析 Key
+  ├─ 1. 打开带 &key={Key} 的链接，从 location.hash 解析 Key
   ├─ 2. 使用 6 位取件码请求 Worker API 获取密文载荷
   ├─ 3. 在浏览器端使用 Web Crypto API 完成解密
   └─ 4. 向用户展示解密后的文本或触发文件下载
