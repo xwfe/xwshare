@@ -96,13 +96,12 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BoxIcon } from 'lucide-vue-next'
-import { useAdminLogin } from '@/composables'
+import { useAdminLogin, useInjectedDarkMode } from '@/composables'
 import { ROUTES } from '@/constants'
 
-const isDarkMode = inject('isDarkMode')
+const isDarkMode = useInjectedDarkMode()
 const router = useRouter()
 const route = useRoute()
 const { password, isLoading, handleSubmit } = useAdminLogin()

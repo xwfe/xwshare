@@ -33,8 +33,8 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
 import { HistoryIcon, SendIcon } from 'lucide-vue-next'
+import { useInjectedDarkMode } from '@/composables'
 
 interface Props {
   linkText?: string
@@ -49,5 +49,5 @@ interface Emits {
 defineProps<Props>()
 defineEmits<Emits>()
 
-const isDarkMode = inject('isDarkMode')
+const isDarkMode = useInjectedDarkMode()
 </script>

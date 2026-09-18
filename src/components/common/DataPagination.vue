@@ -76,8 +76,9 @@
 </template>
 
 <script setup lang="ts">
-import { inject, computed } from 'vue'
+import { computed } from 'vue'
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-vue-next'
+import { useInjectedDarkMode } from '@/composables'
 
 interface Props {
   currentPage: number
@@ -91,7 +92,7 @@ defineEmits<{
   'page-change': [page: number]
 }>()
 
-const isDarkMode = inject('isDarkMode')
+const isDarkMode = useInjectedDarkMode()
 
 // 计算总页数
 const totalPages = computed(() => Math.ceil(props.total / props.pageSize))

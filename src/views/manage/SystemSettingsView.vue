@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { inject, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RefreshCwIcon, SaveIcon } from 'lucide-vue-next'
 import BaseButton from '@/components/common/BaseButton.vue'
 import SettingNumberInput from '@/components/common/SettingNumberInput.vue'
 import SettingSwitch from '@/components/common/SettingSwitch.vue'
-import { useSystemConfig } from '@/composables'
+import { useInjectedDarkMode, useSystemConfig } from '@/composables'
 
-const isDarkMode = inject('isDarkMode')
+const isDarkMode = useInjectedDarkMode()
 const { t } = useI18n()
 const {
   config,

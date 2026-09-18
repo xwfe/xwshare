@@ -35,8 +35,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { computed } from 'vue'
 import { CloudDownloadIcon, SendIcon } from 'lucide-vue-next'
+import { useInjectedDarkMode } from '@/composables'
 
 interface Props {
   title: string
@@ -54,6 +55,6 @@ const props = withDefaults(defineProps<Props>(), {
 })
 defineEmits<Emits>()
 
-const isDarkMode = inject('isDarkMode')
+const isDarkMode = useInjectedDarkMode()
 const headerIcon = computed(() => (props.mode === 'send' ? SendIcon : CloudDownloadIcon))
 </script>

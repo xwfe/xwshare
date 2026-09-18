@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { inject } from 'vue'
 import { SunIcon, MoonIcon } from 'lucide-vue-next'
+import { useInjectedDarkMode } from '@/composables'
 
-const isDarkMode = inject('isDarkMode') as { value: boolean }
+const isDarkMode = useInjectedDarkMode()
 const toggleTheme = inject('toggleTheme') as () => void
 
 const toggleColorMode = () => {

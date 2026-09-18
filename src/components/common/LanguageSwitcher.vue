@@ -58,13 +58,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { GlobeIcon, ChevronDownIcon } from 'lucide-vue-next'
+import { useInjectedDarkMode } from '@/composables'
 import { availableLocales, setLocale } from '@/i18n/index'
 
 const { locale } = useI18n()
-const isDarkMode = inject('isDarkMode')
+const isDarkMode = useInjectedDarkMode()
 const isDropdownOpen = ref(false)
 const switcherRef = ref<HTMLElement | null>(null)
 

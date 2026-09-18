@@ -41,8 +41,8 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
 import { CheckIcon } from 'lucide-vue-next'
+import { useInjectedDarkMode } from '@/composables'
 
 const props = withDefaults(
   defineProps<{
@@ -61,7 +61,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: string | number | null]
 }>()
 
-const isDarkMode = inject('isDarkMode')
+const isDarkMode = useInjectedDarkMode()
 
 const handleInput = (event: Event) => {
   const target = event.target as HTMLInputElement

@@ -412,8 +412,24 @@ export default {
     content: 'File Content',
     previewContent: 'Preview Content',
     download: 'Click to Download',
+    decryptAndDownload: 'Decrypt & Download',
     qrCode: 'Retrieve QR Code',
     scanQrCode: 'Scan QR code for quick retrieval'
+  },
+
+  // Parcel security badges & labels
+  parcel: {
+    pickupCode: 'Pickup Code',
+    copyLink: 'Copy Pickup Link',
+    wgetDownload: 'wget Download',
+    wgetCopyHint: 'Click to copy wget command',
+    scanQrPickup: 'Scan QR code for quick pickup',
+    encryptedStorage: 'End-to-End Encrypted',
+    standardStorage: 'Standard Storage',
+    badgeBurn: 'Burn After Read',
+    badgeBurnConsumed: 'Burn After Read (destroyed from server)',
+    badgeEncrypted: 'End-to-End Encryption Protected',
+    badgeMaxDownloads: 'Limited to {count} downloads'
   },
 
   // Content Preview Modal

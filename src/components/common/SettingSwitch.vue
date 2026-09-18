@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
+import { useInjectedDarkMode } from '@/composables'
 
 defineProps<{
   label: string
@@ -52,5 +52,5 @@ defineEmits<{
   toggle: []
 }>()
 
-const isDarkMode = inject('isDarkMode')
+const isDarkMode = useInjectedDarkMode()
 </script>

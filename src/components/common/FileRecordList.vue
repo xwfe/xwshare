@@ -90,9 +90,9 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
 import { FileIcon, EyeIcon, DownloadIcon, TrashIcon } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
+import { useInjectedDarkMode } from '@/composables'
 import type { ReceivedFileRecord } from '@/types'
 
 const { t } = useI18n()
@@ -109,7 +109,7 @@ interface Emits {
 
 defineProps<Props>()
 defineEmits<Emits>()
-const isDarkMode = inject('isDarkMode')
+const isDarkMode = useInjectedDarkMode()
 </script>
 
 <style scoped>

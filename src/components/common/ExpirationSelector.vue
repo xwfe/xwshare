@@ -127,8 +127,8 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useInjectedDarkMode } from '@/composables'
 
 const { t } = useI18n()
 
@@ -148,7 +148,7 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
-const isDarkMode = inject('isDarkMode')
+const isDarkMode = useInjectedDarkMode()
 
 const updateMethod = (event: Event) => {
   const target = event.target as HTMLSelectElement

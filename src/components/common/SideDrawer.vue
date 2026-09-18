@@ -53,8 +53,8 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
 import { HistoryIcon, XIcon } from 'lucide-vue-next'
+import { useInjectedDarkMode } from '@/composables'
 
 interface Props {
   visible: boolean
@@ -67,7 +67,7 @@ interface Emits {
 
 defineProps<Props>()
 defineEmits<Emits>()
-const isDarkMode = inject('isDarkMode')
+const isDarkMode = useInjectedDarkMode()
 </script>
 
 <style scoped>

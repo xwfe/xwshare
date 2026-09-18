@@ -88,7 +88,7 @@
                     : 'bg-zinc-800 text-white hover:bg-zinc-900'
                 "
               >
-                {{ record.encrypted ? '解密并下载' : t('fileDetail.download') }}
+                {{ record.encrypted ? t('fileDetail.decryptAndDownload') : t('fileDetail.download') }}
               </button>
             </div>
           </div>
@@ -100,14 +100,14 @@
               class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium"
               :class="isDarkMode ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-700'"
             >
-              🔥 阅后即焚（已从服务器销毁）
+              🔥 {{ t('parcel.badgeBurnConsumed') }}
             </span>
             <span
               v-if="record.encrypted"
               class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium"
               :class="isDarkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'"
             >
-              🔒 端到端加密保护
+              🔒 {{ t('parcel.badgeEncrypted') }}
             </span>
           </div>
         </div>
@@ -144,9 +144,9 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { FileIcon, CalendarIcon, HardDriveIcon, DownloadIcon } from 'lucide-vue-next'
+import { useInjectedDarkMode } from '@/composables'
 import QRCode from 'qrcode.vue'
 import type { ReceivedFileRecord } from '@/types'
 import { buildDownloadUrl, buildReceivedRecordQrValue } from '@/utils/share-url'
@@ -166,7 +166,7 @@ interface Emits {
 defineProps<Props>()
 defineEmits<Emits>()
 const { t } = useI18n()
-const isDarkMode = inject('isDarkMode')
+const isDarkMode = useInjectedDarkMode()
 
 const getDownloadUrl = (record: ReceivedFileRecord) => {
   return buildDownloadUrl(record.downloadUrl)

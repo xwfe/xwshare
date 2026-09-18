@@ -17,8 +17,9 @@
 </template>
 
 <script setup lang="ts">
-import { inject, computed } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useInjectedDarkMode } from '@/composables'
 
 const { t } = useI18n()
 
@@ -38,7 +39,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<Emits>()
-const isDarkMode = inject('isDarkMode')
+const isDarkMode = useInjectedDarkMode()
 
 // 使用computed属性处理多语言文本
 const placeholderText = computed(() => props.placeholder || t('send.uploadArea.textInput'))

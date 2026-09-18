@@ -692,8 +692,24 @@ export default {
     content: '文件内容',
     previewContent: '预览内容',
     download: '点击下载',
+    decryptAndDownload: '解密并下载',
     qrCode: '取件二维码',
     scanQrCode: '扫描二维码快速取件'
+  },
+
+  // 快递件安全特性标签
+  parcel: {
+    pickupCode: '取件码',
+    copyLink: '复制取件链接',
+    wgetDownload: 'wget 下载',
+    wgetCopyHint: '点击复制 wget 命令',
+    scanQrPickup: '扫描二维码快速取件',
+    encryptedStorage: '端到端已加密',
+    standardStorage: '标准存储',
+    badgeBurn: '阅后即焚',
+    badgeBurnConsumed: '阅后即焚（已从服务器销毁）',
+    badgeEncrypted: '端到端加密保护',
+    badgeMaxDownloads: '仅限 {count} 次'
   },
 
   // 内容预览

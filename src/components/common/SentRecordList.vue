@@ -90,9 +90,9 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
 import { ClipboardCopyIcon, EyeIcon, FileIcon, TrashIcon } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
+import { useInjectedDarkMode } from '@/composables'
 import type { SentFileRecord } from '@/types'
 
 const { t } = useI18n()
@@ -107,7 +107,7 @@ defineEmits<{
   'delete-record': [id: number]
 }>()
 
-const isDarkMode = inject('isDarkMode')
+const isDarkMode = useInjectedDarkMode()
 </script>
 
 <style scoped>

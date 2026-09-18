@@ -37,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
+import { useInjectedDarkMode } from '@/composables'
 
 interface Props {
   modelValue: string
@@ -62,5 +62,5 @@ defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
-const isDarkMode = inject('isDarkMode')
+const isDarkMode = useInjectedDarkMode()
 </script>

@@ -69,8 +69,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { X } from 'lucide-vue-next'
+import { useInjectedDarkMode } from '@/composables'
 
 interface Props {
   show: boolean
@@ -90,7 +91,7 @@ const emit = defineEmits<{
   close: []
 }>()
 
-const isDarkMode = inject('isDarkMode')
+const isDarkMode = useInjectedDarkMode()
 const modalRef = ref<HTMLElement>()
 
 const sizeClasses = computed(() => {

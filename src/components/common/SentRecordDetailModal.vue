@@ -82,7 +82,7 @@
                   class="text-xs sm:text-sm truncate"
                   :class="record.encryptionKey ? 'text-emerald-500 font-medium' : (isDarkMode ? 'text-zinc-300' : 'text-slate-600')"
                 >
-                  {{ record.encryptionKey ? '端到端已加密' : '标准存储' }}
+                  {{ record.encryptionKey ? t('parcel.encryptedStorage') : t('parcel.standardStorage') }}
                 </span>
               </div>
             </div>
@@ -94,7 +94,7 @@
                 class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
                 :class="isDarkMode ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-700'"
               >
-                🔥 阅后即焚
+                🔥 {{ t('parcel.badgeBurn') }}
               </span>
               <span
                 v-if="record.encryptionKey"
@@ -108,7 +108,7 @@
                 class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
                 :class="isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-700'"
               >
-                📥 仅限 {{ record.maxDownloads }} 次
+                📥 {{ t('parcel.badgeMaxDownloads', { count: record.maxDownloads }) }}
               </span>
             </div>
           </div>
@@ -124,7 +124,7 @@
                 "
               >
                 <div class="flex items-center justify-between mb-3 sm:mb-4">
-                  <h4 class="font-medium text-sm sm:text-base">取件码</h4>
+                  <h4 class="font-medium text-sm sm:text-base">{{ t('parcel.pickupCode') }}</h4>
                   <button
                     @click="$emit('copy-code', record)"
                     class="p-1.5 sm:p-2 rounded-full hover:bg-white/10 transition-colors"
@@ -150,7 +150,7 @@
                       class="mr-1.5 h-4 w-4 flex-shrink-0 sm:mr-2 sm:h-5 sm:w-5"
                       :class="isDarkMode ? 'text-zinc-300' : 'text-zinc-700'"
                     />
-                    <span class="truncate">wget下载</span>
+                    <span class="truncate">{{ t('parcel.wgetDownload') }}</span>
                   </h4>
                   <button
                     @click="$emit('copy-wget', record)"
@@ -167,7 +167,7 @@
                   class="text-xs sm:text-sm font-mono break-all line-clamp-2"
                   :class="isDarkMode ? 'text-zinc-300' : 'text-slate-600'"
                 >
-                  点击复制wget命令
+                  {{ t('parcel.wgetCopyHint') }}
                 </p>
               </div>
             </div>
@@ -183,7 +183,7 @@
                 class="text-xs sm:text-sm truncate max-w-full"
                 :class="isDarkMode ? 'text-zinc-400' : 'text-slate-500'"
               >
-                扫描二维码快速取件
+                {{ t('parcel.scanQrPickup') }}
               </p>
             </div>
           </div>
@@ -202,7 +202,7 @@
                 : 'bg-zinc-800 text-white hover:bg-zinc-900'
             "
           >
-            复制取件链接
+            {{ t('parcel.copyLink') }}
           </button>
         </div>
       </div>
@@ -211,7 +211,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { computed } from 'vue'
 import {
   ClipboardCopyIcon,
   ClockIcon,
@@ -222,6 +222,7 @@ import {
 } from 'lucide-vue-next'
 import QRCode from 'qrcode.vue'
 import { useI18n } from 'vue-i18n'
+import { useInjectedDarkMode } from '@/composables'
 import type { SentFileRecord } from '@/types'
 
 const props = defineProps<{
@@ -237,7 +238,7 @@ defineEmits<{
 }>()
 
 const { t } = useI18n()
-const isDarkMode = inject('isDarkMode')
+const isDarkMode = useInjectedDarkMode()
 const qrValue = computed(() => (props.record ? props.getQRCodeValue(props.record) : ''))
 </script>
 
