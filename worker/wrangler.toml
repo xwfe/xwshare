@@ -12,6 +12,15 @@ database_id = "your-d1-database-id"
 binding = "BUCKET"
 bucket_name = "xwshare-files"
 
+[[ratelimits]]
+name = "RATE_LIMITER"
+# Stable xwshare v1 namespace; it must stay unique within the Cloudflare account.
+namespace_id = "365411037"
+
+  [ratelimits.simple]
+  limit = 10
+  period = 60
+
 [triggers]
 crons = ["*/15 * * * *"]
 

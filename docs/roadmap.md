@@ -13,8 +13,7 @@
 当前主要缺口：
 
 1. 自动回归已覆盖主要 Worker 业务与安全状态机；Turnstile 真实远端校验不放进本地稳定套件
-2. 限速仍是单 isolate 内存实现
-3. 生产日志已有结构，但还没接告警 / Logpush
+2. 生产日志已有结构，但还没接告警 / Logpush
 
 ---
 
@@ -112,7 +111,7 @@
 - [x] 结构化日志：寄件、取件拒绝/成功、Turnstile、限速、未捕获错误、清理结果
 - [x] 补文件上传、阅后即焚、管理后台关键路径集成回归
 - [x] 补并发阅后即焚、最大下载次数、Cron 清理回归
-- [ ] 限速换 Cloudflare 自带 Rate Limiting 或 Durable Object，丢掉进程内 `Map`
+- [x] 限速换 Cloudflare Rate Limiting binding，丢掉进程内 `Map`
 - [ ] 接 Cloudflare Logs / Logpush 告警策略；当前只产出结构化事件
 - [x] Wrangler 升到 4.130.0、Workers Types 升到 5.20260908.1，并保持独立维护提交
 
@@ -120,4 +119,4 @@
 
 ## 建议的下一轮
 
-阶段 5 的本地自动回归已覆盖主要 Worker 状态机，Wrangler / Workers Types 维护升级也已完成。下一轮阶段 5 只做限速后端与生产日志接入。
+阶段 5 的本地自动回归、Wrangler 维护升级和限速后端替换均已完成。下一轮阶段 5 只剩生产日志 / 告警接入。

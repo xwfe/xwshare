@@ -86,4 +86,4 @@ cd ..
 pnpm build
 ```
 
-阶段 5 当前验收基线：单测 **7/7**、本地集成套件覆盖文本 / 文件 / 阅后即焚（含并发 claim）/ 最大下载次数 / 管理后台（含文件 R2 删除）/ Cron 清理、Worker typecheck 通过、根项目 build 通过。
+阶段 5 当前验收基线：单测 **7/7**、本地集成套件覆盖文本 / 文件 / 阅后即焚（含并发 claim）/ 最大下载次数 / 管理后台（含文件 R2 删除）/ Cron 清理 / Rate Limiting 429 阈值、Worker typecheck 通过、根项目 build 通过。

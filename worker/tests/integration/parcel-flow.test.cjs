@@ -519,4 +519,32 @@ test('本地 Worker + D1 + R2 关键链路', { timeout: 45000 }, async (t) => {
     assert.equal(pickupAfterCleanup.response.status, 403);
     assert.equal(pickupAfterCleanup.body.code, 'UNAVAILABLE');
   });
+
+  await t.test('Cloudflare Rate Limiting 本地模拟在第 11 次请求返回 429', async () => {
+    const ip = '198.51.100.25';
+
+    for (let i = 0; i < 10; i++) {
+      const attempt = await jsonRequest(`${baseUrl}/api/pickup`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'CF-Connecting-IP': ip
+        },
+        body: JSON.stringify({ code: 'ZZZZZZ' })
+      });
+      assert.equal(attempt.response.status, 404);
+      assert.equal(attempt.body.code, 'NOT_FOUND');
+    }
+
+    const limited = await jsonRequest(`${baseUrl}/api/pickup`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'CF-Connecting-IP': ip
+      },
+      body: JSON.stringify({ code: 'ZZZZZZ' })
+    });
+    assert.equal(limited.response.status, 429);
+    assert.equal(limited.body.code, 'RATE_LIMIT_EXCEEDED');
+  });
 });

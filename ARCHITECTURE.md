@@ -100,7 +100,7 @@ Worker 挂了就报错，**不会**再回退到旧 API。寄取件和管理后�
 
 | 说法 | 实际 |
 | --- | --- |
-| 边缘智能限速 | `rate-limit.ts` 是进程内 `Map`，每 IP 每分钟 10 次，多 isolate 不共享 |
+| 边缘限速 | Cloudflare Rate Limiting binding，同一来源 IP 每分钟 10 次；计数按 Cloudflare location 生效且最终一致，不用于精确计费 |
 | 上传走预签名、不占 Worker | 上传仍走 Worker 代理，只是多了上传凭证 |
 
 ---
@@ -145,4 +145,4 @@ Worker 使用 Node 自带 `node:test`，没有再引入测试框架依赖。当�
 
 Worker 关键事件通过 `worker/src/utils/log.ts` 输出单行 JSON，事件名固定，日志不带取件码、Secret、正文、上传 token 或原始 IP。已覆盖寄件成功、取件成功/拒绝、Turnstile 拒绝/配置错误、限速、未捕获错误、过期清理结果。
 
-本地回归已覆盖管理员删除文件时的 R2 联动；Turnstile 真实远端校验按设计不进入本地稳定套件。限速仍是 isolate 内 `Map`，尚未换 Cloudflare Rate Limiting / Durable Object。
+本地回归已覆盖管理员删除文件时的 R2 联动和 Rate Limiting binding 的 10/分钟阈值；Turnstile 真实远端校验按设计不进入本地稳定套件。

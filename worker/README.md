@@ -15,7 +15,7 @@ src/
 ├── middleware/
 │   ├── admin-auth.ts         # /api/admin/* 校验 Bearer token
 │   ├── cors.ts               # 目前 origin: *
-│   ├── rate-limit.ts         # 进程内 IP 计数，每分钟 10 次
+│   ├── rate-limit.ts         # Cloudflare Rate Limiting binding，每分钟 10 次
 │   └── turnstile.ts          # 生产缺 Secret 直接 500
 ├── routes/
 │   ├── admin.ts              # 公开配置、登录、统计、快递列表/删除
@@ -110,7 +110,9 @@ D1 库名、R2 桶名是 `xwshare-db` / `xwshare-files`，与 wrangler 绑定和
 | DELETE | `/api/admin/parcels/:id` | 无 | 标 DELETED，文件同时删 R2。要 Bearer |
 | GET | `/` | 无 | `{ status: 'ok', service: 'xwshare-worker' }` |
 
-限速加在寄件和取件上：同一 isolate 内每 IP 每分钟 10 次，超了 429 `RATE_LIMIT_EXCEEDED`。
+限速加在寄件和取件上：Cloudflare `RATE_LIMITER` binding 对同一来源 IP 每分钟允许 10 次，超了返回 429 `RATE_LIMIT_EXCEEDED`。寄件和取件共享同一个 namespace / 额度。
+
+这是匿名服务目前能拿到的稳定来源标识，但 IP 限速会让共享 NAT / 移动网络下的多名用户共享额度。若未来增加账户或匿名设备身份，应优先把 limiter key 换成稳定用户 / 设备 ID，而不是继续依赖 IP。
 
 `/api/admin/stats`、`/api/admin/parcels*` 没带或带错 token 返回 401 `UNAUTHORIZED`。
 
