@@ -7,7 +7,7 @@ export interface UploadInstructions {
 
 export interface StorageProvider {
   createUploadUrl(fileKey: string, contentType: string, contentLength: number): Promise<UploadInstructions>;
-  getDownloadUrl(fileKey: string): Promise<string>;
+  getDownloadUrl(fileKey: string, token?: string): Promise<string>;
   delete(fileKey: string): Promise<void>;
   exists(fileKey: string): Promise<boolean>;
 }

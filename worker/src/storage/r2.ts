@@ -14,8 +14,9 @@ export class R2Storage implements StorageProvider {
     };
   }
 
-  async getDownloadUrl(fileKey: string): Promise<string> {
-    return `${this.origin}/api/download-file/${encodeURIComponent(fileKey)}`;
+  async getDownloadUrl(fileKey: string, token?: string): Promise<string> {
+    const url = `${this.origin}/api/download-file/${encodeURIComponent(fileKey)}`;
+    return token ? `${url}?token=${encodeURIComponent(token)}` : url;
   }
 
   async delete(fileKey: string): Promise<void> {

@@ -2,9 +2,13 @@
   "name": "worker",
   "version": "1.0.0",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --var ENVIRONMENT:development --var ADMIN_PASSWORD:xshare-dev --port 8787",
     "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:init": "wrangler d1 execute drop-db --remote --file=src/db/schema.sql",
+    "db:init:local": "wrangler d1 execute drop-db --local --file=src/db/schema.sql",
+    "db:migrate:local": "wrangler d1 execute drop-db --local --file=src/db/migrate-pending.sql",
+    "db:migrate": "wrangler d1 execute drop-db --remote --file=src/db/migrate-pending.sql"
   },
   "dependencies": {
     "hono": "^4.5.3"
