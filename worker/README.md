@@ -40,9 +40,12 @@ pnpm run db:init:local    # 只第一次。不跑的话寄件报 D1 表不存在
 pnpm run db:migrate:local # 已有旧表时升级 PENDING / upload_token_hash。新库不要跑
 pnpm dev                  # 127.0.0.1:8787
 pnpm run typecheck
+pnpm test
 ```
 
 `pnpm dev` 会带 `--var ENVIRONMENT:development` 和本地管理员口令。只跑 `wrangler dev`、不带 `ENVIRONMENT` 时，没配 `TURNSTILE_SECRET_KEY` 会直接 500。`PICKUP_CODE_SECRET` 没配时，只有 development 才允许兜底，生产会 500。本地后台口令写在仓库根目录 [README.md](../README.md)。
+
+`pnpm test` 先跑取件码 / HMAC / token 单测，再用独立 `.test-state-*` 启动真实 Wrangler + 本地 D1，验证最小“寄文本 → 取件”链路。详细边界见 [docs/testing.md](../docs/testing.md)。
 
 ---
 
@@ -108,3 +111,17 @@ D1 库名、R2 桶名是 `xwshare-db` / `xwshare-files`，与 wrangler 绑定和
 限速加在寄件和取件上：同一 isolate 内每 IP 每分钟 10 次，超了 429 `RATE_LIMIT_EXCEEDED`。
 
 `/api/admin/stats`、`/api/admin/parcels*` 没带或带错 token 返回 401 `UNAUTHORIZED`。
+
+---
+
+## 结构化日志
+
+Worker 关键路径输出单行 JSON，便于 Cloudflare Logs / Logpush 后续直接检索。当前事件包括：
+
+- `parcel.create.success`、`parcel.upload.registered`
+- `parcel.pickup.success`、`parcel.pickup.rejected`
+- `turnstile.rejected`、`turnstile.misconfigured`
+- `request.rate_limited`、`request.unhandled`
+- `cleanup.expired.completed`、`cleanup.expired.failed`
+
+日志不记录取件码、Secret、正文、上传 token 或原始 IP。字段和验收方式见 [docs/testing.md](../docs/testing.md)。

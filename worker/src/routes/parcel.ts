@@ -11,6 +11,7 @@ import {
   verifyDownloadToken
 } from '../utils/secret';
 import { R2Storage } from '../storage/r2';
+import { logEvent } from '../utils/log';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -39,6 +40,7 @@ app.post('/api/parcels', rateLimitMiddleware, turnstileMiddleware, async (c) => 
   const { type, content, title, expiresIn, burnAfterRead, maxDownloads, encrypted } = body;
 
   if (type !== 'text' && type !== 'markdown') {
+    logEvent('warn', 'parcel.create.rejected', { reason: 'invalid_type' });
     return c.json({ error: 'Invalid type', code: 'INVALID_TYPE' }, 400);
   }
 
@@ -66,6 +68,12 @@ app.post('/api/parcels', rateLimitMiddleware, turnstileMiddleware, async (c) => 
       ipHash
     )
     .run();
+
+  logEvent('info', 'parcel.create.success', {
+    parcelId: id,
+    type,
+    encrypted: Boolean(encrypted)
+  });
 
   return c.json({ data: { code, expiresAt } });
 });
@@ -106,6 +114,12 @@ app.post('/api/parcels/upload', rateLimitMiddleware, turnstileMiddleware, async 
       uploadTokenHash
     )
     .run();
+
+  logEvent('info', 'parcel.upload.registered', {
+    parcelId: id,
+    encrypted: Boolean(encrypted),
+    fileSize: Number(fileSize) || 0
+  });
 
   const storage = new R2Storage(requestOrigin(c), c.env.BUCKET);
   const uploadInstructions = await storage.createUploadUrl(fileKey, contentType, fileSize);
@@ -200,22 +214,27 @@ app.post('/api/pickup', rateLimitMiddleware, async (c) => {
     .bind(hash)
     .first();
   if (!parcel) {
+    logEvent('warn', 'parcel.pickup.rejected', { reason: 'not_found' });
     return c.json({ error: 'Not found', code: 'NOT_FOUND' }, 404);
   }
 
   if (parcel.status === 'PENDING') {
+    logEvent('warn', 'parcel.pickup.rejected', { parcelId: parcel.id, reason: 'not_ready' });
     return c.json({ error: 'Upload not finished', code: 'NOT_READY' }, 403);
   }
 
   if (parcel.status !== 'AVAILABLE') {
+    logEvent('warn', 'parcel.pickup.rejected', { parcelId: parcel.id, reason: 'unavailable' });
     return c.json({ error: 'Parcel no longer available', code: 'UNAVAILABLE' }, 403);
   }
 
   if (new Date(parcel.expires_at) < new Date()) {
+    logEvent('warn', 'parcel.pickup.rejected', { parcelId: parcel.id, reason: 'expired' });
     return c.json({ error: 'Parcel expired', code: 'EXPIRED' }, 403);
   }
 
   if (parcel.max_downloads > 0 && parcel.download_count >= parcel.max_downloads) {
+    logEvent('warn', 'parcel.pickup.rejected', { parcelId: parcel.id, reason: 'max_downloads' });
     return c.json({ error: 'Max downloads reached', code: 'MAX_DOWNLOADS' }, 403);
   }
 
@@ -226,6 +245,7 @@ app.post('/api/pickup', rateLimitMiddleware, async (c) => {
       .bind(parcel.id)
       .run();
     if (!result.success || result.meta.changes === 0) {
+      logEvent('warn', 'parcel.pickup.rejected', { parcelId: parcel.id, reason: 'already_claimed' });
       return c.json({ error: 'Already claimed', code: 'CLAIMED' }, 403);
     }
   }
@@ -238,6 +258,12 @@ app.post('/api/pickup', rateLimitMiddleware, async (c) => {
     const storage = new R2Storage(requestOrigin(c), c.env.BUCKET);
     const downloadToken = await signDownloadToken(parcel.file_key, secret);
     const downloadUrl = await storage.getDownloadUrl(parcel.file_key, downloadToken);
+
+    logEvent('info', 'parcel.pickup.success', {
+      parcelId: parcel.id,
+      type: parcel.type,
+      burnAfterRead: parcel.burn_after_read === 1
+    });
 
     return c.json({
       data: {
@@ -253,6 +279,12 @@ app.post('/api/pickup', rateLimitMiddleware, async (c) => {
       }
     });
   }
+
+  logEvent('info', 'parcel.pickup.success', {
+    parcelId: parcel.id,
+    type: parcel.type,
+    burnAfterRead: parcel.burn_after_read === 1
+  });
 
   return c.json({
     data: {

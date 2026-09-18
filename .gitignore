@@ -33,3 +33,5 @@ output
 # Tool / runtime state
 .playwright-mcp/
 worker/.wrangler/
+worker/.test-state*/
+/goal-*/

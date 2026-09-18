@@ -1,5 +1,6 @@
 import { Context, Next } from 'hono';
 import { Env } from '../types/env';
+import { logEvent } from '../utils/log';
 
 export async function turnstileMiddleware(c: Context<{ Bindings: Env }>, next: Next) {
   const isDev = c.env.ENVIRONMENT === 'development';
@@ -10,12 +11,19 @@ export async function turnstileMiddleware(c: Context<{ Bindings: Env }>, next: N
       // 开发环境允许跳过（本地调试用）
       return next();
     }
+    logEvent('error', 'turnstile.misconfigured', {
+      path: new URL(c.req.url).pathname
+    });
     // 生产环境缺少配置 → Fail-Closed，不能静默放行
     return c.json({ error: 'Turnstile not configured', code: 'SERVER_MISCONFIGURED' }, 500);
   }
 
   const token = c.req.header('x-turnstile-token');
   if (!token) {
+    logEvent('warn', 'turnstile.rejected', {
+      path: new URL(c.req.url).pathname,
+      reason: 'missing_token'
+    });
     return c.json({ error: 'Missing turnstile token', code: 'MISSING_TOKEN' }, 400);
   }
 
@@ -31,6 +39,10 @@ export async function turnstileMiddleware(c: Context<{ Bindings: Env }>, next: N
   const outcome: any = await result.json();
 
   if (!outcome.success) {
+    logEvent('warn', 'turnstile.rejected', {
+      path: new URL(c.req.url).pathname,
+      reason: 'invalid_token'
+    });
     return c.json({ error: 'Invalid turnstile token', code: 'INVALID_TOKEN' }, 403);
   }
 

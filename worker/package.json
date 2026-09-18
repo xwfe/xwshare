@@ -1,10 +1,20 @@
 {
   "name": "xwshare-worker",
   "version": "1.0.0",
+  "author": "xwfe",
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xwfe/xwshare.git",
+    "directory": "worker"
+  },
   "scripts": {
     "dev": "wrangler dev --var ENVIRONMENT:development --var ADMIN_PASSWORD:xwshare-dev --port 8787",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
+    "test": "node tests/run.cjs",
+    "test:unit": "node --require ./tests/register-ts.cjs --test ./tests/unit/pickup-code.test.cjs ./tests/unit/secret.test.cjs",
+    "test:integration": "node --test ./tests/integration/parcel-flow.test.cjs",
     "db:init": "wrangler d1 execute xwshare-db --remote --file=src/db/schema.sql",
     "db:init:local": "wrangler d1 execute xwshare-db --local --file=src/db/schema.sql",
     "db:migrate:local": "wrangler d1 execute xwshare-db --local --file=src/db/migrate-pending.sql",

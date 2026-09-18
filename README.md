@@ -6,6 +6,8 @@
 
 **现在只跑前端 + Worker 就能寄件、取件、进管理后台。** 后续计划见 [docs/roadmap.md](docs/roadmap.md)。
 
+仓库：`xwfe/xwshare`。维护者 / 作者统一使用 **xwfe**。
+
 ---
 
 ## 本地怎么跑
@@ -13,8 +15,8 @@
 需要：Node.js 18+、pnpm 8+。
 
 ```bash
-git clone https://github.com/xwfe/xshare.git
-cd xshare
+git clone https://github.com/xwfe/xwshare.git
+cd xwshare
 pnpm install
 cd worker && pnpm install && cd ..
 ```
@@ -63,6 +65,21 @@ npx wrangler pages deploy dist --project-name xwshare
 
 ---
 
+## 测试
+
+Worker 已有轻量自动回归，不额外引入测试框架：
+
+```bash
+cd worker
+pnpm test
+```
+
+当前覆盖 7 个取件码 / 密钥单测，以及 1 条使用真实 Wrangler + 独立本地 D1 的“寄文本 → 取件”集成链路。测试数据写入临时 `.test-state-*` 后自动清理，不碰日常 `.wrangler/state`。
+
+测试边界、日志事件和扩展规则见 [docs/testing.md](docs/testing.md)。
+
+---
+
 ## 现在有什么、没有什么
 
 有：
@@ -78,7 +95,7 @@ npx wrangler pages deploy dist --project-name xwshare
 
 - **没有**旧后台那些边角：视图预设、批量策略、系统设置页、分片秒传
 - **没有** Service Worker，不能离线用。`public/manifest.json` 只让浏览器显示“可安装”
-- **没有**测试套件
+- 测试目前只覆盖 Worker 安全基础与最小文本寄取件；文件上传、阅后即焚、后台接口还没有完整集成回归
 - 许可证为 **GPL-3.0**，见 [LICENSE](LICENSE)
 
 安全模型怎么工作、哪些地方还是空的，写在 [ARCHITECTURE.md](ARCHITECTURE.md)，不在这里重复。
@@ -92,6 +109,7 @@ npx wrangler pages deploy dist --project-name xwshare
 | 本 README | 怎么跑、怎么部署、当前能用什么 |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 系统怎么工作、安全模型、已知缺口 |
 | [worker/README.md](worker/README.md) | Worker 目录、命令、环境变量、API |
+| [docs/testing.md](docs/testing.md) | 自动测试、结构化日志、验收边界 |
 | [docs/roadmap.md](docs/roadmap.md) | 后续计划 |
 
 `CHANGELOG.md` 留给 Release Please，现在还没打过正式版本。

@@ -131,3 +131,18 @@ Worker 挂了就报错，**不会**再回退到旧 API。寄取件和管理后�
 存储接口 `StorageProvider` 预留了换 MinIO / S3 的位置，当前只有 `R2Storage`，且上传 / 下载 URL 都指回本 Worker。
 
 Cron：`*/15 * * * *`，逻辑在 `worker/src/cron/cleanup.ts`。只处理 `expires_at` 已过且状态不是 `DELETED` 的行。`CLAIMED` 但未过期的阅后即焚记录会一直留到过期。
+
+---
+
+## 8. 回归与可观测性
+
+Worker 使用 Node 自带 `node:test`，没有再引入测试框架依赖。当前两层：
+
+1. 单测：取件码字符集与归一化、生产 Secret fail-closed、HMAC、管理员 token、下载 token；
+2. 最小集成：真实 Wrangler + 独立本地 D1，验证文本 Parcel 创建后能用规范化后的取件码取回。
+
+`cd worker && pnpm test` 一次跑完。集成测试使用独立 `.test-state-*`，结束后清理，不复用开发库。
+
+Worker 关键事件通过 `worker/src/utils/log.ts` 输出单行 JSON，事件名固定，日志不带取件码、Secret、正文、上传 token 或原始 IP。已覆盖寄件成功、取件成功/拒绝、Turnstile 拒绝/配置错误、限速、未捕获错误、过期清理结果。
+
+仍未覆盖：文件上传完整链路、阅后即焚并发、后台管理接口的自动集成回归；限速仍是 isolate 内 `Map`，尚未换 Cloudflare Rate Limiting / Durable Object。
