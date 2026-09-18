@@ -1,177 +1,97 @@
-# 📦 Drop - 现代化文件快递柜
+# xshare
 
-> 基于 **Cloudflare Workers + D1 + R2** 与 **Vue 3** 构建的轻量、安全、极速文件与文本快递柜系统。
+匿名文件 / 文本快递柜。寄件人拿到 **6 位取件码**（大写字母 + 数字，不含 `0/O/1/I/L`），收件人输入取件码或打开分享链接即可取走。
 
-[![Vue 3](https://img.shields.io/badge/Vue-3.5-brightgreen.svg)](https://vuejs.org/)
-[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020.svg)](https://workers.cloudflare.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![PWA Ready](https://img.shields.io/badge/PWA-Ready-purple.svg)](https://web.dev/progressive-web-apps/)
+前端是 Vue 3，后端是 Cloudflare Worker（Hono + D1 + R2）。仓库从 [FileCodeBox](https://github.com/vastsa/FileCodeBox) 前端迁过来，界面文案和 PWA 名称里还能看到 FileCodeBox / Drop，产品名以本仓库为准。
 
----
-
-## ✨ 核心特性
-
-- 🚀 **极简快递柜体验**：无需注册，放下即走；采用 **6 位精简取件码**（排除易混淆字符）与智能直达链接。
-- 🔒 **端到端零知识加密（E2E AES-256-GCM）**：
-  - 密钥仅存在于分享链接的 URL Fragment（`#key=...`）中；
-  - 浏览器不会将 `#fragment` 发送给服务器，服务端仅存储密文；即使数据库或对象存储泄露也无法解密。
-- 🔥 **原子阅后即焚状态机**：
-  - 严格的状态流转：`AVAILABLE` ➔ `CLAIMED` ➔ `CONSUMED` ➔ `DELETED`；
-  - 数据库原子 CAS 操作保障仅允许成功取件一次，随后自动销毁。
-- ⚡ **分层边缘存储架构**：
-  - **短文本 / Markdown**：直接入库 Cloudflare D1，毫秒级读取，不浪费对象存储请求；
-  - **大型文件**：客户端直接通过预签名/代理流式直传 Cloudflare R2，不占用 Worker 内存与 CPU 时间。
-- 🛡️ **生产级安全防护**：
-  - **Cloudflare Turnstile**：无感人机验证，阻断自动化爬虫与滥用；
-  - **边缘 Rate Limiting**：基于 IP 的智能频控限制，保障服务高可用。
-- 📱 **Progressive Web App (PWA)**：
-  - 完整的 `manifest.json` 与 Service Worker 离线底座，支持一键安装为手机/桌面原生 App。
-- 🎨 **高质感玻璃拟态 UI (Glassmorphism)**：
-  - 深色 / 浅色 / 系统自适应主题无缝切换；
-  - 精致动效、拖拽上传、剪贴板快速粘贴识别、QR 快速扫码取件。
+**现在只跑前端 + Worker 就能寄件、取件、进管理后台。** 旧 Python FileCodeBox API 已从运行时剔除。后续计划见 [docs/roadmap.md](docs/roadmap.md)。
 
 ---
 
-## 🏗️ 架构拓扑
+## 本地怎么跑
 
-```text
-浏览器客户端 (Vue 3 SPA + PWA)
-  │
-  ├─ 文本 / 图片 / 文件拖拽 / 剪贴板快速粘贴
-  ├─ 客户端端到端加解密 (AES-256-GCM)
-  └─ 输入 6 位取件码 或 扫码一键提取
-        │
-        ▼
-Cloudflare Edge Network
-  ├─ Cloudflare Pages / Static Hosting (前端静态托管)
-  ├─ Cloudflare Turnstile (人机验证)
-  └─ Cloudflare Workers (边缘 API 网关 / 状态流转 / 密钥哈希)
-        │
-        ├─► D1 Database (记录元数据、过期时间、短文本、阅后即焚原子状态)
-        └─► R2 Bucket (高可靠对象存储，承载大文件流)
-```
-
----
-
-## 🚀 快速开始
-
-### 1. 运行环境要求
-- **Node.js** >= 18.0.0
-- **pnpm** >= 8.0.0 (推荐) 或 `mise`
-- **Wrangler** >= 3.0.0 (Cloudflare CLI)
-
-### 2. 克隆与安装依赖
+需要：Node.js 18+、pnpm 8+。
 
 ```bash
-git clone https://github.com/vastsa/FileCodeBox.git
-cd FileCodeBox
-
-# 安装前端依赖
+git clone https://github.com/xwfe/xshare.git
+cd xshare
 pnpm install
-
-# 安装 Worker 后端依赖
 cd worker && pnpm install && cd ..
 ```
 
-### 3. 本地开发与联调
+先起 Worker（终端 1）。**第一次**要先建本地 D1 表，不建的话寄件会报 D1 表不存在，看着像 Worker 挂了，其实是库是空的：
 
-启动本地 Cloudflare Worker 边缘服务（终端 1）：
 ```bash
 cd worker
+pnpm run db:init:local
 pnpm dev
-# Worker 默认运行在 http://127.0.0.1:8787
+# http://127.0.0.1:8787
 ```
 
-启动前端开发服务器（终端 2）：
+再起前端（终端 2）：
+
 ```bash
 pnpm dev
-# 前端默认运行在 http://localhost:5173
-# 默认配置了 /api 反向代理至本地 8787 端口
+# http://localhost:5173
+# Vite 已把 /api 反代到 8787，所以 .env.development 里 VITE_WORKER_API_URL 留空即可
 ```
 
-打开浏览器访问 `http://localhost:5173` 即可开始使用。
+浏览器打开 `http://localhost:5173`。寄文本 / 文件、取件都走 Worker。右上角盾牌 / 登录图标进后台，口令是 **`xshare-dev`**（`pnpm dev` 已经带上 `ADMIN_PASSWORD`）。未登录打开 `/#/admin` 会跳到登录页。
+
+如果 `pnpm run` 报 `ERR_PNPM_IGNORED_BUILDS`，不要跟那个提示去改安全策略；直接跑 `./node_modules/.bin/wrangler` / `./node_modules/.bin/vite`。
+
+本地 Turnstile 用的是 Cloudflare 官方测试 Site Key（`1x00000000000000000000AA`，永远通过）。Worker 在 `ENVIRONMENT=development` 时也会跳过人机验证。
 
 ---
 
-## 🛠️ 生产部署指南
+## 生产部署
 
-### 1. 准备 Cloudflare 资源
+详细命令在 [worker/README.md](worker/README.md)，这里只写顺序和容易踩的坑。
 
-确保已登录 Cloudflare 账号：
-```bash
-pnpm --filter worker dlx wrangler login
-```
+1. 在 Cloudflare 建 D1（库名 `drop-db`）和 R2（桶名 `drop-files`），把 `database_id` 填进 `worker/wrangler.toml`。
+2. 对**远程**库执行 `pnpm run db:init`。只跑了 `db:init:local` 的话，生产寄件会报表不存在。
+3. 设置三个 Secret：`PICKUP_CODE_SECRET`（自己生成一段长随机串，用来哈希取件码）、`TURNSTILE_SECRET_KEY`、`ADMIN_PASSWORD`（后台登录口令，至少 6 位）。生产没配 Turnstile Secret，所有寄件接口直接 **500**，不是静默放行。没配管理员口令，后台登录 **500**。
+4. `cd worker && pnpm run deploy`。
+5. 改 `.env.production`：同域部署时 `VITE_WORKER_API_URL` 留空；填上 Turnstile Site Key。然后：
 
-创建 D1 数据库：
-```bash
-pnpm --filter worker dlx wrangler d1 create drop-db
-```
-复制终端输出的 `database_id`，填入 `worker/wrangler.toml` 中的 `database_id`。
-
-初始化 D1 数据库表结构：
-```bash
-pnpm --filter worker dlx wrangler d1 execute drop-db --file=src/db/schema.sql
-```
-
-创建 R2 存储桶：
-```bash
-pnpm --filter worker dlx wrangler r2 bucket create drop-files
-```
-
-设置密钥变量（Secret）：
-```bash
-pnpm --filter worker dlx wrangler secret put PICKUP_CODE_SECRET
-# 输入一段自定义强随机字符串（用于 HMAC-SHA256 哈希取件码）
-
-pnpm --filter worker dlx wrangler secret put TURNSTILE_SECRET_KEY
-# 填入 Cloudflare 控制台申请的 Turnstile Secret Key（如不启用可跳过）
-```
-
-### 2. 部署 Worker 后端
-
-```bash
-cd worker
-pnpm run deploy
-```
-
-### 3. 构建与部署前端 (Cloudflare Pages)
-
-修改 `.env.production`（若与 Worker 绑定在同一自定义域名下，可直接留空使用相对路径 `/api`）：
-```env
-VITE_WORKER_API_URL=
-VITE_TURNSTILE_SITE_KEY=your-turnstile-site-key
-```
-
-打包前端应用：
 ```bash
 pnpm build
+npx wrangler pages deploy dist --project-name xshare
 ```
 
-打包产物位于 `dist/` 目录，可直接拖拽部署至 **Cloudflare Pages** 或使用 CLI 发布：
-```bash
-npx wrangler pages deploy dist --project-name drop-frontend
-```
+`pnpm build` 会先跑架构分层检查（`scripts/check-architecture.mjs`）和 `vue-tsc`。检查失败时构建直接停，不会出 `dist/`。
 
 ---
 
-## 🔐 安全模型细节
+## 现在有什么、没有什么
 
-1. **取件码单向哈希（HMAC-SHA256）**
-   - 数据库中仅持久化 `pickup_code_hash = HMAC_SHA256(pickup_code, secret)`；
-   - 即使 D1 数据库被拖库，由于无法反向逆推 6 位明文取件码，攻击者无法根据数据库记录提取文件。
+有：
 
-2. **零知识端到端加密（Zero-Knowledge E2E Encryption）**
-   - 用户选择“端到端加密”时，前端调用 `crypto.subtle` 本地生成 AES-GCM-256 密钥；
-   - 文本和文件均在浏览器端完全加密后再上传，服务端仅保存密文；
-   - 解密密钥通过 URL Fragment（形如 `https://drop.example.com/#/?code=X7K9P2#key=...`）传递；
-   - 依据 RFC 规范，URL Hash 不会被包含在 HTTP 请求头中发送至服务器。
+- 文本 / 文件寄件，6 位取件码，过期时间只有 **1 小时 / 1 天 / 7 天** 三档
+- 可选端到端加密（AES-256-GCM）。密钥在分享链接的 Hash 里：`/#/?code=AB3K7M&key=...`，浏览器不会把 `#` 后面的内容发给服务器
+- 阅后即焚、最大取件次数
+- 中 / 英界面、深浅色主题
+- 寄件记录存在浏览器本地，刷新还在，换设备没有
+- 管理后台最小集：登录、看今天寄了多少、按状态列出未删除快递、删除（文件会连 R2 一起删）
 
-3. **阅后即焚（Burn After Read）原子锁**
-   - 服务端取件使用原子更新：`UPDATE parcels SET status = 'CLAIMED' WHERE id = ? AND status = 'AVAILABLE'`；
-   - 高并发请求下确保仅有单一请求能够成功 Claim 内容，后续请求立即返回 403 已销毁。
+没有（别按文档里的旧说法去找）：
+
+- **没有**旧后台那些边角：视图预设、批量策略、系统设置页、分片秒传
+- **没有** Service Worker，不能离线用。`public/manifest.json` 只让浏览器显示“可安装”
+- **没有**测试套件
+- 仓库里 **没有** LICENSE 文件
+
+安全模型怎么工作、哪些地方还是空的，写在 [ARCHITECTURE.md](ARCHITECTURE.md)，不在这里重复。
 
 ---
 
-## 📄 开源许可
+## 文档怎么分工
 
-本项目基于 [MIT License](LICENSE) 协议开源。
+| 文件 | 只写这件事 |
+| --- | --- |
+| 本 README | 怎么跑、怎么部署、当前能用什么 |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | 系统怎么工作、安全模型、已知缺口 |
+| [worker/README.md](worker/README.md) | Worker 目录、命令、环境变量、API |
+| [docs/roadmap.md](docs/roadmap.md) | 后续计划 |
+
+`CHANGELOG.md` 留给 Release Please，现在还没打过正式版本。

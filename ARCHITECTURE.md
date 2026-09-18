@@ -1,101 +1,133 @@
-# 系统架构说明 (System Architecture)
+# 架构说明
 
-本文档记录基于 **Cloudflare Workers + D1 + R2 + Vue 3** 的现代化快递柜系统整体架构、分层职责与核心数据流。
+本文只写系统**现在实际怎么工作**，以及和宣传不符的地方。怎么跑见 [README.md](README.md)，下一步做什么见 [docs/roadmap.md](docs/roadmap.md)。
 
 ---
 
-## 1. 整体架构拓扑
+## 1. 现在只打 Worker
 
 ```text
-                  [ 浏览器 (Browser SPA / PWA) ]
-                   │                         │
-            (文本/取件/元数据)            (文件流直传)
-                   │                         │
-                   ▼                         │
-   [ Cloudflare Worker (API / 状态机) ]      │
-       │                   │                 │
- (HMAC 哈希校验)     (Turnstile / 限速)       │
-       │                   │                 │
-       ▼                   ▼                 ▼
-  [ Cloudflare D1 ]   [ 审计 / 日志 ]   [ Cloudflare R2 ]
-  (元数据/短文本/状态)                 (大文件对象存储)
+浏览器 (Vue 3, Hash 路由)
+  │
+  ├─ 寄件 / 取件 ──► Cloudflare Worker (:8787 或同域 /api)
+  └─ 管理后台   ──► 同上 Worker 的 /api/admin/* 、/api/config
+                         ├─ D1  parcels 表（元数据、短文本、状态）
+                         └─ R2  文件对象（经 Worker 中转，不是 R2 预签名直传）
 ```
 
----
+寄取件只走 `src/services/parcel.ts`（`fetch`）。`VITE_WORKER_API_URL` 为空时用相对路径 `/api`，开发环境由 Vite 反代到 8787。
 
-## 2. 核心概念模型：Parcel（快递件）
-
-系统不再以“分享链接”作为一级业务实体，统一抽象为 **Parcel（快递件）**：
-
-| 实体属性 | 类型 | 说明 |
-| :--- | :--- | :--- |
-| `id` | UUID (string) | 快递唯一物理标识 |
-| `pickup_code_hash` | string | 6 位取件码的 HMAC-SHA256 哈希值（不持久化明文取件码） |
-| `type` | text \| markdown \| file | 快递载荷类型 |
-| `title` | string | 文件名称或简要说明 |
-| `content` | text | 短文本或 Markdown 内容（直接存 D1，不走 R2） |
-| `file_key` | string | 对象存储中的文件唯一键（`files/{id}/{filename}`） |
-| `file_size` | number | 字节大小 |
-| `expires_at` | ISO 8601 | 过期失效时间戳（支持 1h / 1d / 7d） |
-| `burn_after_read` | boolean | 是否开启阅后即焚（取件即销毁） |
-| `max_downloads` | number | 允许的最大取件次数（0 = 无限制） |
-| `download_count` | number | 当前已被提取的次数计数 |
-| `encrypted` | boolean | 是否由客户端执行了 AES-256-GCM 端到端加密 |
-| `status` | enum | 状态机：`AVAILABLE` ➔ `CLAIMED` ➔ `CONSUMED` ➔ `DELETED` |
+Worker 挂了就报错，**不会**再回退到旧 Python API。寄取件和管理后台最小集都打 Worker。仓库里还留着 `FileService` / axios 和旧后台大页（`useAdminFiles`、系统设置），主路径不再调用。
 
 ---
 
-## 3. 端到端零知识加密 (Zero-Knowledge E2E Encryption)
+## 2. Parcel（快递件）
 
-```text
-[寄件客户端]
-  ├─ 1. crypto.subtle 生成随机 256 位 AES-GCM 密钥 Key
-  ├─ 2. 在本地内存中对明文/文件流执行加密 (IV: 12 字节)
-  ├─ 3. 将加密后的密文 Ciphertext 发送给 Worker (D1/R2)
-  └─ 4. 生成分享 URL：https://drop.example.com/#/?code=X7K9P2&key={Key}
-        │
-        └─► key 位于 URL Fragment 内的 query 参数（&key=），遵循 RFC 规范，浏览器绝对不会将其随 HTTP 头发送给服务器
+业务实体不再叫“分享链接”，统一叫 Parcel。D1 表定义在 `worker/src/db/schema.sql`。
 
-[收件客户端]
-  ├─ 1. 打开带 &key={Key} 的链接，从 location.hash 解析 Key
-  ├─ 2. 使用 6 位取件码请求 Worker API 获取密文载荷
-  ├─ 3. 在浏览器端使用 Web Crypto API 完成解密
-  └─ 4. 向用户展示解密后的文本或触发文件下载
-```
-
----
-
-## 4. 存储适配层 (StorageProvider Interface)
-
-Worker 后端通过接口与具体存储解耦，为后续接入自建存储（如 MinIO、本地 NAS、HP 400 G4）提供无缝扩展能力：
-
-```typescript
-export interface StorageProvider {
-  createUploadUrl(fileKey: string, contentType: string, contentLength: number): Promise<UploadInstructions>
-  getDownloadUrl(fileKey: string): Promise<string>
-  delete(fileKey: string): Promise<void>
-  exists(fileKey: string): Promise<boolean>
-}
-```
-
-- **当前实现**：`R2Storage`，基于 Cloudflare 原生 R2 存储桶绑定（`env.BUCKET`）。
-- **预留能力**：通过环境变量或工厂方法按需切换至 S3、WebDAV 或本地节点。
+| 字段 | 实际含义 |
+| --- | --- |
+| `id` | UUID |
+| `pickup_code_hash` | 取件码的 HMAC-SHA256，库里没有明文取件码 |
+| `type` | `text` / `markdown` / `file`。前端寄件目前只传 `text`，`markdown` 是预留 |
+| `content` | 短文本，直接进 D1 |
+| `file_key` | R2 对象键，格式 `files/{id}/{filename}` |
+| `expires_at` | 过期时间。Worker 只认 `1h` / `1d` / `7d`，其它值按 1 天 |
+| `burn_after_read` | 阅后即焚 |
+| `max_downloads` | `0` = 不限制 |
+| `encrypted` | 客户端是否已加密，服务端不当密钥用 |
+| `status` | `PENDING`（文件未传完）→ `AVAILABLE` → 阅后即焚时 `CLAIMED` → 过期清理 `DELETED` |
+| `ip_hash` | 创建者 IP 的 HMAC，库里看不到原始 IP |
+| `upload_token_hash` | 文件上传一次性凭证的 HMAC，确认后清空 |
+| `storage_provider` | 默认 `r2`，没有第二套实现 |
 
 ---
 
-## 5. 前端架构分层与工程约束
+## 3. 状态机
 
-前端代码严格遵循单一职责分层，禁止跨层反向渗透：
+实际状态：`PENDING` → `AVAILABLE` → `CLAIMED` → `DELETED`。没有 `CONSUMED`。
 
-- **页面层 (`src/views/`)**：
-  - 只负责布局编排、组件组合与路由跳转，不直接调用 `fetch` 或 `axios`。
-- **组件层 (`src/components/`)**：
-  - 纯 UI 渲染单元，只通过 `props` 接收数据并通过 `emit` 抛出用户事件。
-- **流程组合层 (`src/composables/`)**：
-  - 承载完整的业务流程生命周期（如 `useSendFlow`、`useRetrieveFlow`、`useSendSubmit`）。
-- **服务网关层 (`src/services/`)**：
-  - 统一封装边缘网关请求（`ParcelService`、`FileService`）。
-- **纯工具层 (`src/utils/`)**：
-  - 无副作用的纯函数集合（如 `crypto.ts` 加解密、`share-url.ts` 链接生成、`clipboard.ts`）。
-- **状态存储层 (`src/stores/`)**：
-  - 仅用于管理全局性持久化或跨页面状态（`alertStore`、`fileData` 等）。
+- 文本新建就是 `AVAILABLE`
+- 文件新建是 `PENDING`，`confirm-upload` 确认 R2 里真有对象后才改成 `AVAILABLE`
+- 取件时如果还是 `PENDING`，返回 403 `NOT_READY`
+- 阅后即焚取件成功：`AVAILABLE → CLAIMED`
+- 定时任务每 15 分钟扫过期记录：删 R2，标 `DELETED`，清空 `content` / `file_key`
+
+并发取件：阅后即焚用 `UPDATE ... WHERE status='AVAILABLE'` 做 CAS。非阅后即焚只加 `download_count`。
+
+---
+
+## 4. 寄件 / 取件数据流
+
+### 文本
+
+1. 可选：浏览器 `crypto.subtle` 生成 AES-256-GCM 密钥，加密正文
+2. `POST /api/parcels`（Turnstile + 内存限速）
+3. Worker 生成 6 位取件码，哈希入库，把**明文取件码**返回给寄件人（只此一次）
+4. 分享链接：`https://example.com/#/?code=AB3K7M`，加密时再拼 `&key=...`
+
+### 文件
+
+1. `POST /api/parcels/upload` 拿到 `uploadUrl`、`uploadToken`，记录为 `PENDING`
+2. 浏览器 `PUT`，请求头带 `x-upload-token`。没有凭证或状态不是 `PENDING` 会 401/403
+3. `POST /api/parcels/confirm-upload`：R2 里有对象才把状态改成 `AVAILABLE`，空转返回 409
+
+文件**经过 Worker**，不是客户端直传 R2。请求体上限 100MB。
+
+### 取件
+
+1. `POST /api/pickup` `{ code }`
+2. 校验哈希、状态（`PENDING` 不能取）、过期、次数
+3. 文本把 `content` 放进 JSON；文件返回带签名 `token` 的下载地址，15 分钟失效
+4. 加密文本由浏览器解密；缺 `key` 时提示用完整链接
+
+`GET /api/download-file/:fileKey` 没有有效 `token` 会 403。`token` 用取件码对应的密钥签，不是把取件码再传一遍。
+
+---
+
+## 5. 安全模型（已落地 / 还是空的）
+
+已落地：
+
+- 取件码、上传凭证、创建者 IP 都只存 HMAC。生产缺 `PICKUP_CODE_SECRET` 会 500，不会再用 `'secret'`
+- 文件 `PENDING` 不能取；上传 / 下载都要一次性凭证
+- E2E 密钥只在 URL Hash 里，服务端只存密文
+- 寄件接口：Turnstile 生产 fail-closed；开发环境 `ENVIRONMENT=development` 可跳过
+- 阅后即焚的 Claim 是原子更新
+- 管理员口令在 Worker Secret 里。登录签发 HMAC token（24 小时）；没带或过期的 `/api/admin/*` 返回 401
+
+还弱的：
+
+| 说法 | 实际 |
+| --- | --- |
+| 边缘智能限速 | `rate-limit.ts` 是进程内 `Map`，每 IP 每分钟 10 次，多 isolate 不共享 |
+| 上传走预签名、不占 Worker | 上传仍走 Worker 代理，只是多了上传凭证 |
+
+---
+
+## 6. 前端分层
+
+`pnpm build` 会跑 `scripts/check-architecture.mjs`，分层是硬约束。
+
+| 层 | 目录 | 允许做什么 |
+| --- | --- | --- |
+| 页面 | `src/views/` | 排版、组合组件、跳路由。禁止 `fetch` / 调 Service |
+| 组件 | `src/components/` | props 进、emit 出 |
+| 流程 | `src/composables/` | 寄件、取件、登录等完整生命周期 |
+| 网关 | `src/services/` | 唯一发请求的地方 |
+| 工具 | `src/utils/` | 无请求副作用的纯函数（加解密、拼链接） |
+| 状态 | `src/stores/` | 跨页状态（提醒、本地寄件记录、配置缓存） |
+
+路由是 Hash History，所以分享链接必须是 `/#/?code=...`，不能写成 `/share/xxx`。
+
+`/#/admin` 要登录。公开配置来自 `GET /api/config`。仪表盘和快递列表打 `/api/admin/stats`、`/api/admin/parcels`。
+
+---
+
+## 7. Worker 内部
+
+入口 `worker/src/index.ts`：挂 CORS、Parcel 路由、Admin 路由、健康检查 `GET /`、Cron。
+
+存储接口 `StorageProvider` 预留了换 MinIO / S3 的位置，当前只有 `R2Storage`，且上传 / 下载 URL 都指回本 Worker。
+
+Cron：`*/15 * * * *`，逻辑在 `worker/src/cron/cleanup.ts`。只处理 `expires_at` 已过且状态不是 `DELETED` 的行。`CLAIMED` 但未过期的阅后即焚记录会一直留到过期。
