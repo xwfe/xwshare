@@ -5,7 +5,7 @@ export type ParcelType = 'text' | 'markdown' | 'file'
 export type ExpiresIn = '1h' | '1d' | '7d'
 
 /** 快递件状态（服务端维护） */
-export type ParcelStatus = 'AVAILABLE' | 'CLAIMED' | 'CONSUMED' | 'DELETED'
+export type ParcelStatus = 'PENDING' | 'AVAILABLE' | 'CLAIMED' | 'DELETED'
 
 /** 创建文本快递请求 */
 export interface CreateTextParcelRequest {
@@ -40,6 +40,8 @@ export interface CreateParcelResponse {
   uploadUrl?: string
   /** 仅文件类型：R2 object key */
   fileKey?: string
+  /** 仅文件类型：一次性上传凭证，PUT 时放在 x-upload-token */
+  uploadToken?: string
 }
 
 /** 取件响应 */

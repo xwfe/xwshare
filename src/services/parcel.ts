@@ -80,14 +80,19 @@ export class ParcelService {
     uploadUrl: string,
     file: File | Blob,
     contentType: string,
-    onProgress?: (loaded: number, total: number) => void
+    onProgress?: (loaded: number, total: number) => void,
+    uploadToken?: string
   ): Promise<void> {
-    // 如果需要进度回调，使用 XMLHttpRequest
+    const headers: Record<string, string> = { 'Content-Type': contentType }
+    if (uploadToken) headers['x-upload-token'] = uploadToken
+
     if (onProgress) {
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest()
         xhr.open('PUT', uploadUrl)
-        xhr.setRequestHeader('Content-Type', contentType)
+        Object.entries(headers).forEach(([key, value]) => {
+          xhr.setRequestHeader(key, value)
+        })
 
         xhr.upload.addEventListener('progress', (e) => {
           if (e.lengthComputable) {
@@ -110,10 +115,9 @@ export class ParcelService {
       })
     }
 
-    // 无进度回调时直接用 fetch
     const res = await fetch(uploadUrl, {
       method: 'PUT',
-      headers: { 'Content-Type': contentType },
+      headers,
       body: file
     })
 

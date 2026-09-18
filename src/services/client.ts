@@ -8,12 +8,8 @@ export const AUTH_EVENTS = {
   SETUP_REQUIRED: 'filecodebox:setup:required'
 } as const
 
-const rawBaseURL =
-  import.meta.env.MODE === 'production'
-    ? import.meta.env.VITE_API_BASE_URL_PROD
-    : import.meta.env.VITE_API_BASE_URL_DEV
-
-export const apiBaseURL = typeof rawBaseURL === 'string' ? rawBaseURL.replace(/\/+$/, '') : ''
+/** 旧 Python 后端已移除。管理后台代码若被误调用，会打到当前源站并 404，而不是 localhost:12345。 */
+export const apiBaseURL = ''
 
 const clientOptions = {
   baseURL: apiBaseURL,
@@ -36,23 +32,7 @@ const attachAuthToken = (config: InternalAxiosRequestConfig) => {
   return config
 }
 
-const getSetupPath = (payload?: ApiErrorPayload) => {
-  const detail = payload?.detail
-  if (detail && typeof detail === 'object' && typeof detail.setup === 'string') {
-    return detail.setup
-  }
-  return ''
-}
-
 const handleAuthError = (error: AxiosError<ApiErrorPayload>) => {
-  if (error.response?.status === API_STATUS_CODES.SETUP_REQUIRED) {
-    window.dispatchEvent(
-      new CustomEvent(AUTH_EVENTS.SETUP_REQUIRED, {
-        detail: { setupPath: getSetupPath(error.response.data) }
-      })
-    )
-  }
-
   if (error.response?.status === API_STATUS_CODES.UNAUTHORIZED) {
     clearStoredToken()
     window.dispatchEvent(new CustomEvent(AUTH_EVENTS.UNAUTHORIZED))

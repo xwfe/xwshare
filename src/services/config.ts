@@ -1,52 +1,37 @@
-import api from './client'
 import type { ApiResponse, ConfigState, PublicConfigPayload } from '@/types'
+import { FILE_SIZE_LIMITS } from '@/constants'
+import { workerFetch } from './worker-client'
 
-const isPublicConfigEnvelope = (
-  detail: ConfigState | PublicConfigPayload | null | undefined
-): detail is PublicConfigPayload => {
-  return !!detail && typeof detail === 'object' && 'config' in detail
-}
-
-const normalizeUserConfigResponse = (
-  response: ApiResponse<ConfigState | PublicConfigPayload>
-): ApiResponse<PublicConfigPayload> => {
-  if (isPublicConfigEnvelope(response.detail)) {
-    return {
-      ...response,
-      detail: {
-        config: response.detail.config,
-        meta: response.detail.meta
-      }
-    }
-  }
-
-  return {
-    ...response,
-    detail: {
-      config: response.detail ?? {}
-    }
-  }
+type WorkerPublicConfig = {
+  name: string
+  maxFileSize: number
+  expireStyle: string[]
+  openUpload: number
+  turnstileEnabled: boolean
 }
 
 export class ConfigService {
   static async getConfig(): Promise<ApiResponse<ConfigState>> {
-    return api.get('/admin/config/get')
+    throw new Error('System settings are not on Worker yet')
+  }
+
+  static async updateConfig(_config: Partial<ConfigState>): Promise<ApiResponse> {
+    throw new Error('System settings are not on Worker yet')
   }
 
   static async getUserConfig(): Promise<ApiResponse<PublicConfigPayload>> {
-    try {
-      const response = (await api.get('/api/v1/config')) as ApiResponse<
-        ConfigState | PublicConfigPayload
-      >
-
-      return normalizeUserConfigResponse(response)
-    } catch {
-      const response = (await api.post('/')) as ApiResponse<ConfigState>
-      return normalizeUserConfigResponse(response)
+    const res = await workerFetch<WorkerPublicConfig>('/api/config')
+    const config = res.data
+    return {
+      code: 200,
+      detail: {
+        config: {
+          name: config?.name || 'xshare',
+          uploadSize: config?.maxFileSize || FILE_SIZE_LIMITS.MAX_FILE_SIZE,
+          expireStyle: config?.expireStyle || ['hour', 'day'],
+          openUpload: config?.openUpload ?? 1
+        } as Partial<ConfigState>
+      }
     }
-  }
-
-  static async updateConfig(config: Partial<ConfigState>): Promise<ApiResponse> {
-    return api.patch('/admin/config/update', config)
   }
 }
