@@ -12,6 +12,9 @@ type BuildSentRecordInput = {
   expirationValue: string
   translate: Translate
   getUnit: (method: string) => string
+  encryptionKey?: string
+  burnAfterRead?: boolean
+  maxDownloads?: number
 }
 
 const expirationSecondsByMethod: Record<string, number> = {
@@ -94,6 +97,9 @@ export function buildSentRecord(input: BuildSentRecordInput): SentFileRecord {
             input.translate,
             input.getUnit
           ),
-    retrieveCode
+    retrieveCode,
+    encryptionKey: input.encryptionKey,
+    burnAfterRead: input.burnAfterRead,
+    maxDownloads: input.maxDownloads
   }
 }

@@ -68,13 +68,16 @@ export const copyToClipboard = async (
 /**
  * 生成并复制取件链接
  * @param code 取件码
+ * @param encryptionKey 端到端加密密钥（若存在，追加到 #key=）
+ * @param options 配置选项
  * @returns Promise<boolean> 是否复制成功
  */
 export const copyRetrieveLink = async (
   code: string,
+  encryptionKey?: string,
   options: Pick<CopyOptions, 'notify' | 'showMsg'> = {}
 ): Promise<boolean> => {
-  const link = buildRetrieveUrl(code)
+  const link = buildRetrieveUrl(code, encryptionKey)
   return copyToClipboard(link, {
     successMsg: '取件链接已复制到剪贴板',
     errorMsg: '复制失败，请手动复制取件链接',

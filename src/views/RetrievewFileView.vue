@@ -53,6 +53,7 @@
       :record="selectedRecord"
       @close="closeDetails"
       @preview-content="showContentPreview"
+      @download-record="downloadRecord"
     />
 
     <ContentPreviewModal

@@ -1,13 +1,14 @@
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
-import { FileService } from '@/services'
+import { FileService, ParcelService } from '@/services'
 import { useAlertStore } from '@/stores/alertStore'
 import { useFileDataStore } from '@/stores/fileData'
 import type { ReceivedFileRecord, ShareMetadataResponse, ShareSelectResponse } from '@/types'
 import { copyToClipboard } from '@/utils/clipboard'
 import { getErrorMessage, getResponseMessage } from '@/utils/common'
 import { renderMarkdownPreview } from '@/utils/content-preview'
+import { decryptText, extractEncryptionKey } from '@/utils/crypto'
 import { downloadReceivedRecord } from '@/utils/download-action'
 
 type InputStatus = {
@@ -125,25 +126,73 @@ export function useRetrieveFlow() {
     error.value = ''
 
     try {
-      const res = await FileService.selectFile(normalizedCode.value)
-      if (res.code === 200 && res.detail) {
-        const newFileData = createRecord(res.detail)
+      const encryptionKey = extractEncryptionKey(window.location.hash) || undefined
+      let parcelData: ReceivedFileRecord | null = null
+
+      // 优先通过 Cloudflare Worker Parcel API 取件
+      try {
+        const pRes = await ParcelService.pickup(normalizedCode.value)
+        let content = pRes.content ?? null
+
+        if (pRes.encrypted && content) {
+          if (encryptionKey) {
+            try {
+              content = await decryptText(content, encryptionKey)
+            } catch (decErr) {
+              console.error('Text decryption failed:', decErr)
+              alertStore.showAlert('解密失败，密钥无效或内容损坏', 'error')
+            }
+          } else {
+            alertStore.showAlert('此快递已开启端到端加密，请使用包含密钥的完整链接访问', 'warning')
+          }
+        }
+
+        parcelData = {
+          id: Date.now(),
+          code: normalizedCode.value,
+          filename: pRes.fileName || pRes.title || (pRes.type === 'file' ? 'File' : 'Text'),
+          size: pRes.fileSize
+            ? formatFileSize(pRes.fileSize)
+            : content
+              ? `${(content.length / 1024).toFixed(2)} KB`
+              : '0 KB',
+          downloadUrl: pRes.downloadUrl ?? null,
+          content,
+          date: new Date().toLocaleString(),
+          type: pRes.type === 'file' ? 'file' : 'text',
+          burnAfterRead: pRes.burnAfterRead,
+          encrypted: pRes.encrypted,
+          encryptionKey
+        }
+
+        if (pRes.burnAfterRead) {
+          alertStore.showAlert('🔥 阅后即焚内容已销毁，请妥善保存当前内容', 'warning')
+        }
+      } catch (workerErr: unknown) {
+        console.warn('ParcelService pickup error, attempting legacy fallback:', workerErr)
+        // 回退原有 FileService
+        const res = await FileService.selectFile(normalizedCode.value)
+        if (res.code === 200 && res.detail) {
+          parcelData = createRecord(res.detail)
+        } else {
+          throw workerErr
+        }
+      }
+
+      if (parcelData) {
         const existingIndex = fileStore.receiveData.findIndex(
-          (file) => file.code === newFileData.code
+          (file) => file.code === parcelData!.code
         )
         if (existingIndex !== -1) {
           fileStore.deleteReceiveData(existingIndex)
         }
-        fileStore.addReceiveData(newFileData)
-        selectedRecord.value = newFileData
-        if (newFileData.content) {
+        fileStore.addReceiveData(parcelData)
+        selectedRecord.value = parcelData
+        if (parcelData.content) {
           showPreview.value = true
         }
         inspectedFile.value = null
         alertStore.showAlert(t('retrieve.messages.retrieveSuccess'), 'success')
-      } else {
-        error.value = getResponseMessage(res, t('retrieve.messages.unknownError'))
-        alertStore.showAlert(t('retrieve.messages.retrieveFailure') + error.value, 'error')
       }
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err, t('retrieve.messages.unknownError'))
@@ -213,6 +262,25 @@ export function useRetrieveFlow() {
     previewMediaRecord.value = null
   }
 
+  // 页面挂载时自动解析 URL 中包含的取件码与密钥并自动触发取件
+  onMounted(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    let autoCode = urlParams.get('code')
+    if (!autoCode && window.location.hash.includes('code=')) {
+      const hashQuery = window.location.hash.split('?')[1]
+      if (hashQuery) {
+        const hp = new URLSearchParams(hashQuery.split('#')[0])
+        autoCode = hp.get('code')
+      }
+    }
+    if (autoCode && autoCode.trim().length === 6) {
+      code.value = autoCode.trim()
+      void nextTick(() => {
+        void handleSubmit()
+      })
+    }
+  })
+
   watch(
     () => selectedRecord.value?.content,
     async (content) => {
@@ -230,7 +298,7 @@ export function useRetrieveFlow() {
       resetInspection()
     }
 
-    if (nextCode.length < 5 && error.value) {
+    if (nextCode.length < 6 && error.value) {
       error.value = ''
     }
   })

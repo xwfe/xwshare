@@ -17,7 +17,7 @@ function getExpiresAt(expiresIn: string): string {
 
 app.post('/api/parcels', rateLimitMiddleware, turnstileMiddleware, async (c) => {
   const body = await c.req.json();
-  const { type, content, title, expiresIn, burnAfterRead, maxDownloads } = body;
+  const { type, content, title, expiresIn, burnAfterRead, maxDownloads, encrypted } = body;
   
   if (type !== 'text' && type !== 'markdown') {
     return c.json({ error: 'Invalid type', code: 'INVALID_TYPE' }, 400);
@@ -31,10 +31,10 @@ app.post('/api/parcels', rateLimitMiddleware, turnstileMiddleware, async (c) => 
   const ip = c.req.header('CF-Connecting-IP') || '';
   
   await c.env.DB.prepare(
-    `INSERT INTO parcels (id, pickup_code_hash, type, title, content, expires_at, max_downloads, burn_after_read, ip_hash)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO parcels (id, pickup_code_hash, type, title, content, expires_at, max_downloads, burn_after_read, encrypted, ip_hash)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
-    id, hash, type, title || '', content || '', expiresAt, maxDownloads || 0, burnAfterRead ? 1 : 0, ip
+    id, hash, type, title || '', content || '', expiresAt, maxDownloads || 0, burnAfterRead ? 1 : 0, encrypted ? 1 : 0, ip
   ).run();
   
   return c.json({ data: { code, expiresAt } });
@@ -42,7 +42,7 @@ app.post('/api/parcels', rateLimitMiddleware, turnstileMiddleware, async (c) => 
 
 app.post('/api/parcels/upload', rateLimitMiddleware, turnstileMiddleware, async (c) => {
   const body = await c.req.json();
-  const { fileName, fileSize, contentType, expiresIn, burnAfterRead, maxDownloads } = body;
+  const { fileName, fileSize, contentType, expiresIn, burnAfterRead, maxDownloads, encrypted } = body;
   
   const code = generatePickupCode();
   const hash = await hashPickupCode(code, c.env.PICKUP_CODE_SECRET || 'secret');
@@ -53,10 +53,10 @@ app.post('/api/parcels/upload', rateLimitMiddleware, turnstileMiddleware, async 
   const fileKey = `files/${id}/${fileName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
   
   await c.env.DB.prepare(
-    `INSERT INTO parcels (id, pickup_code_hash, type, title, file_key, file_size, mime_type, expires_at, max_downloads, burn_after_read, status, ip_hash)
-     VALUES (?, ?, 'file', ?, ?, ?, ?, ?, ?, ?, 'AVAILABLE', ?)`
+    `INSERT INTO parcels (id, pickup_code_hash, type, title, file_key, file_size, mime_type, expires_at, max_downloads, burn_after_read, encrypted, status, ip_hash)
+     VALUES (?, ?, 'file', ?, ?, ?, ?, ?, ?, ?, ?, 'AVAILABLE', ?)`
   ).bind(
-    id, hash, fileName, fileKey, fileSize, contentType, expiresAt, maxDownloads || 0, burnAfterRead ? 1 : 0, ip
+    id, hash, fileName, fileKey, fileSize, contentType, expiresAt, maxDownloads || 0, burnAfterRead ? 1 : 0, encrypted ? 1 : 0, ip
   ).run();
   
   const url = new URL(c.req.url);
@@ -128,9 +128,12 @@ app.post('/api/pickup', rateLimitMiddleware, async (c) => {
         type: parcel.type,
         title: parcel.title,
         downloadUrl,
+        fileName: parcel.title,
         fileSize: parcel.file_size,
         mimeType: parcel.mime_type,
-        expiresAt: parcel.expires_at
+        expiresAt: parcel.expires_at,
+        burnAfterRead: parcel.burn_after_read === 1,
+        encrypted: parcel.encrypted === 1
       }
     });
   }
@@ -140,7 +143,9 @@ app.post('/api/pickup', rateLimitMiddleware, async (c) => {
       type: parcel.type,
       title: parcel.title,
       content: parcel.content,
-      expiresAt: parcel.expires_at
+      expiresAt: parcel.expires_at,
+      burnAfterRead: parcel.burn_after_read === 1,
+      encrypted: parcel.encrypted === 1
     }
   });
 });

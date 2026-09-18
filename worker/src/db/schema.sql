@@ -11,6 +11,7 @@ CREATE TABLE parcels (
   max_downloads INTEGER NOT NULL DEFAULT 0,  -- 0 = 无限
   download_count INTEGER NOT NULL DEFAULT 0,
   burn_after_read INTEGER NOT NULL DEFAULT 0,
+  encrypted INTEGER NOT NULL DEFAULT 0,       -- 1 = E2E 客户端加密密文
   status TEXT NOT NULL DEFAULT 'AVAILABLE' CHECK(status IN ('AVAILABLE','CLAIMED','CONSUMED','DELETED')),
   storage_provider TEXT NOT NULL DEFAULT 'r2',
   created_at TEXT NOT NULL DEFAULT (datetime('now')),

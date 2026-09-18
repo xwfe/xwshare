@@ -451,6 +451,9 @@ export interface ReceivedFileRecord {
   date: string
   type?: 'file' | 'text'
   remainingDownloads?: number | null
+  burnAfterRead?: boolean
+  encrypted?: boolean
+  encryptionKey?: string
 }
 
 export interface SentFileRecord {
@@ -460,6 +463,9 @@ export interface SentFileRecord {
   size: string
   expiration: string
   retrieveCode: string
+  encryptionKey?: string
+  burnAfterRead?: boolean
+  maxDownloads?: number
 }
 
 export interface UploadProgress {

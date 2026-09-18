@@ -35,6 +35,7 @@ export function useSendFlow() {
   const selectedRecord = ref<SentFileRecord | null>(null)
   const isSubmitting = ref(false)
   const fileHash = ref('')
+  const turnstileToken = ref('')
   const burnAfterRead = ref(false)
   const maxDownloads = ref(0)
   const enableEncryption = ref(false)
@@ -320,19 +321,28 @@ export function useSendFlow() {
           expireValue,
           expireStyle: expirationMethod.value,
           enableChunk: Boolean(config.value.enableChunk),
-          validateFileSize: checkFileSize
+          validateFileSize: checkFileSize,
+          burnAfterRead: burnAfterRead.value,
+          maxDownloads: maxDownloads.value,
+          enableEncryption: enableEncryption.value,
+          turnstileToken: turnstileToken.value
         })
       } else {
         response = await submitText({
           text: textContent.value,
           expireValue,
-          expireStyle: expirationMethod.value
+          expireStyle: expirationMethod.value,
+          burnAfterRead: burnAfterRead.value,
+          maxDownloads: maxDownloads.value,
+          enableEncryption: enableEncryption.value,
+          turnstileToken: turnstileToken.value
         })
       }
 
       if (!response) return
 
       if (response?.code === 200) {
+        const encryptionKey = (response.detail as { encryptionKey?: string } | undefined)?.encryptionKey
         const newRecord = buildSentRecord({
           response,
           sendType: sendType.value,
@@ -342,7 +352,10 @@ export function useSendFlow() {
           expirationMethod: expirationMethod.value,
           expirationValue: expirationValue.value,
           translate: t,
-          getUnit
+          getUnit,
+          encryptionKey,
+          burnAfterRead: burnAfterRead.value,
+          maxDownloads: maxDownloads.value
         })
         fileDataStore.addShareDataRecord(newRecord)
         alertStore.showAlert(
@@ -352,6 +365,7 @@ export function useSendFlow() {
         selectedFile.value = null
         selectedFiles.value = []
         textContent.value = ''
+        turnstileToken.value = ''
         resetUploadProgress()
         resetPresignUpload()
         selectedRecord.value = newRecord
@@ -405,6 +419,7 @@ export function useSendFlow() {
     sendRecords,
     uploadDescription,
     expirationOptions,
+    turnstileToken,
     burnAfterRead,
     maxDownloads,
     enableEncryption,

@@ -66,7 +66,7 @@
             </div>
             <div v-else class="ml-2 flex flex-wrap gap-2">
               <button
-                v-if="isPreviewable(record)"
+                v-if="isPreviewable(record) && !record.encrypted"
                 type="button"
                 class="rounded-xl px-4 py-2 text-sm font-semibold transition duration-300"
                 :class="
@@ -78,20 +78,37 @@
               >
                 {{ t('fileRecord.preview') }}
               </button>
-              <a
-                :href="getDownloadUrl(record)"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="rounded-xl px-4 py-2 text-sm font-semibold transition duration-300"
+              <button
+                type="button"
+                @click="$emit('download-record', record)"
+                class="rounded-xl px-4 py-2 text-sm font-semibold transition duration-300 cursor-pointer"
                 :class="
                   isDarkMode
                     ? 'bg-zinc-200 text-zinc-950 hover:bg-zinc-100'
                     : 'bg-zinc-800 text-white hover:bg-zinc-900'
                 "
               >
-                {{ t('fileDetail.download') }}
-              </a>
+                {{ record.encrypted ? '解密并下载' : t('fileDetail.download') }}
+              </button>
             </div>
+          </div>
+
+          <!-- 安全属性提示 -->
+          <div v-if="record.burnAfterRead || record.encrypted" class="flex flex-wrap gap-2 pt-3 border-t" :class="isDarkMode ? 'border-zinc-800' : 'border-slate-100'">
+            <span
+              v-if="record.burnAfterRead"
+              class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium"
+              :class="isDarkMode ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-700'"
+            >
+              🔥 阅后即焚（已从服务器销毁）
+            </span>
+            <span
+              v-if="record.encrypted"
+              class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium"
+              :class="isDarkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'"
+            >
+              🔒 端到端加密保护
+            </span>
           </div>
         </div>
 
@@ -143,6 +160,7 @@ interface Emits {
   close: []
   'preview-content': []
   'preview-file': []
+  'download-record': [record: ReceivedFileRecord]
 }
 
 defineProps<Props>()

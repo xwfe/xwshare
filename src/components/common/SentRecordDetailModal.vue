@@ -76,15 +76,40 @@
               <div class="flex items-center min-w-0">
                 <ShieldCheckIcon
                   class="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0"
-                  :class="isDarkMode ? 'text-zinc-400' : 'text-slate-500'"
+                  :class="record.encryptionKey ? 'text-emerald-500' : (isDarkMode ? 'text-zinc-400' : 'text-slate-500')"
                 />
                 <span
                   class="text-xs sm:text-sm truncate"
-                  :class="isDarkMode ? 'text-zinc-300' : 'text-slate-600'"
+                  :class="record.encryptionKey ? 'text-emerald-500 font-medium' : (isDarkMode ? 'text-zinc-300' : 'text-slate-600')"
                 >
-                  安全加密
+                  {{ record.encryptionKey ? '端到端已加密' : '标准存储' }}
                 </span>
               </div>
+            </div>
+
+            <!-- 附加特性徽标 -->
+            <div v-if="record.burnAfterRead || record.encryptionKey || record.maxDownloads" class="mt-3 flex flex-wrap gap-2 pt-2 border-t" :class="isDarkMode ? 'border-zinc-800' : 'border-slate-200/60'">
+              <span
+                v-if="record.burnAfterRead"
+                class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                :class="isDarkMode ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-700'"
+              >
+                🔥 阅后即焚
+              </span>
+              <span
+                v-if="record.encryptionKey"
+                class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                :class="isDarkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'"
+              >
+                🔒 AES-256-GCM
+              </span>
+              <span
+                v-if="record.maxDownloads"
+                class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                :class="isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-700'"
+              >
+                📥 仅限 {{ record.maxDownloads }} 次
+              </span>
             </div>
           </div>
 

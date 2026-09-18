@@ -7,7 +7,7 @@ type CopyNotify = (message: string, type: 'success' | 'error') => void
 export function createSentRecordActions(notify: CopyNotify) {
   return {
     copyLink: (record: SentFileRecord) =>
-      copyRetrieveLink(record.retrieveCode, { notify }),
+      copyRetrieveLink(record.retrieveCode, record.encryptionKey, { notify }),
     copyCode: (record: SentFileRecord) =>
       copyRetrieveCode(record.retrieveCode, { notify }),
     copyWgetCommand: (record: SentFileRecord) =>

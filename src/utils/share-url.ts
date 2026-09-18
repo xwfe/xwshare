@@ -14,8 +14,9 @@ export function buildAbsoluteUrl(path: string): string {
   return `${getApiOrigin()}${normalizedPath}`
 }
 
-export function buildRetrieveUrl(code: string): string {
-  return `${window.location.origin}/#/?code=${code}`
+export function buildRetrieveUrl(code: string, encryptionKey?: string): string {
+  const base = `${window.location.origin}/#/?code=${code}`
+  return encryptionKey ? `${base}#key=${encryptionKey}` : base
 }
 
 export function buildDownloadUrl(downloadUrl: string | null): string {
@@ -29,8 +30,8 @@ export function buildReceivedRecordQrValue(record: {
   return record.downloadUrl ? buildDownloadUrl(record.downloadUrl) : buildRetrieveUrl(record.code)
 }
 
-export function buildSentRecordQrValue(record: { retrieveCode: string }): string {
-  return buildRetrieveUrl(record.retrieveCode)
+export function buildSentRecordQrValue(record: { retrieveCode: string; encryptionKey?: string }): string {
+  return buildRetrieveUrl(record.retrieveCode, record.encryptionKey)
 }
 
 export function buildWgetCommand(retrieveCode: string, fileName: string): string {

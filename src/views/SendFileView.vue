@@ -173,7 +173,6 @@ import { useInjectedDarkMode, useSendFlow } from '@/composables'
 const isDarkMode = useInjectedDarkMode()
 const { t } = useI18n()
 const router = useRouter()
-const turnstileToken = ref('')
 const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || ''
 const {
   sendType,
@@ -193,6 +192,7 @@ const {
   sendRecords,
   uploadDescription,
   expirationOptions,
+  turnstileToken,
   burnAfterRead,
   maxDownloads,
   enableEncryption,

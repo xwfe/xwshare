@@ -20,9 +20,20 @@ const saveBlobAsFile = async (blob: Blob, filename: string) => {
   saveAs(blob, filename)
 }
 
+import { ParcelService } from '@/services/parcel'
+import { decryptFile } from '@/utils/crypto'
+
 export async function downloadReceivedRecord(record: ReceivedFileRecord): Promise<void> {
   if (record.downloadUrl) {
-    window.open(buildDownloadUrl(record.downloadUrl), '_blank')
+    const targetUrl = buildDownloadUrl(record.downloadUrl)
+    if (record.encrypted && record.encryptionKey) {
+      const encryptedBlob = await ParcelService.downloadFile(targetUrl)
+      const mimeType = 'application/octet-stream'
+      const decryptedBlob = await decryptFile(encryptedBlob, record.encryptionKey, mimeType)
+      await saveBlobAsFile(decryptedBlob, record.filename)
+      return
+    }
+    window.open(targetUrl, '_blank')
     return
   }
 

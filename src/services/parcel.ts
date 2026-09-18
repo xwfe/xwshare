@@ -49,6 +49,9 @@ export class ParcelService {
   ): Promise<CreateParcelResponse> {
     const res = await workerFetch<CreateParcelResponse>('/api/parcels', {
       method: 'POST',
+      headers: {
+        'x-turnstile-token': req.turnstileToken || ''
+      },
       body: JSON.stringify(req)
     })
     if (!res.data) throw new Error('Empty response from worker')
@@ -61,6 +64,9 @@ export class ParcelService {
   ): Promise<CreateParcelResponse> {
     const res = await workerFetch<CreateParcelResponse>('/api/parcels/upload', {
       method: 'POST',
+      headers: {
+        'x-turnstile-token': req.turnstileToken || ''
+      },
       body: JSON.stringify(req)
     })
     if (!res.data) throw new Error('Empty response from worker')
