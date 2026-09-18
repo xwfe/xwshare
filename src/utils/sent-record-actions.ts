@@ -11,7 +11,7 @@ export function createSentRecordActions(notify: CopyNotify) {
     copyCode: (record: SentFileRecord) =>
       copyRetrieveCode(record.retrieveCode, { notify }),
     copyWgetCommand: (record: SentFileRecord) =>
-      copyWgetCommand(record.retrieveCode, record.filename, { notify }),
+      copyWgetCommand(record.retrieveCode, record.filename, record.encryptionKey, { notify }),
     getQRCodeValue: (record: SentFileRecord) => buildSentRecordQrValue(record)
   }
 }

@@ -241,7 +241,10 @@ export default {
       retrieveFailure: '获取文件失败：',
       networkError: '取件失败，请稍后重试：',
       unknownError: '未知错误',
-      previewUnavailable: '暂时无法预览文件信息，可直接取件'
+      previewUnavailable: '暂时无法预览文件信息，可直接取件',
+      decryptFailed: '解密失败，密钥无效或内容损坏',
+      encryptionKeyRequired: '此快递已开启端到端加密，请使用包含密钥的完整链接访问',
+      burnedAfterRead: '阅后即焚内容已销毁，请妥善保存当前内容'
     },
     workspace: {
       sendFile: '发送文件',
@@ -407,6 +410,11 @@ export default {
       fileTypeNotAllowed: '不允许上传该类型文件，允许类型：{types}',
       serverError: '服务器响应异常',
       sendFailed: '发送失败,请稍后重试',
+      packingFiles: '正在打包文件...',
+      encryptingFile: '正在端到端加密文件...',
+      encryptingText: '正在端到端加密文本...',
+      uploadingFile: '正在上传文件...',
+      missingUploadUrl: '未获取到有效上传地址',
       expiresAfterCount: '{count}次后过期',
       expiresAt: '{date}过期',
       emptyFileError: '无法读取空文件',

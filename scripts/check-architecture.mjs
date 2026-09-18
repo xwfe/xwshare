@@ -28,9 +28,36 @@ const rules = [
     patterns: [/from ['"]@\/services\/[^'"]+['"]/],
   },
   {
-    name: '预签名上传 composable 不直接依赖 store',
-    files: ['src/composables/usePresignedUpload.ts'],
-    patterns: [/from ['"]@\/stores\/[^'"]+['"]/],
+    name: '寄取件主路径不得调用旧后端',
+    files: [
+      'src/composables/useSendSubmit.ts',
+      'src/composables/useSendFlow.ts',
+      'src/composables/useRetrieveFlow.ts',
+      'src/utils/share-url.ts',
+    ],
+    patterns: [
+      /\bFileService\b/,
+      /\buploadChunkedFile\b/,
+      /\busePresignedUpload\b/,
+      /\/share\//,
+      /VITE_API_BASE_URL/,
+    ],
+  },
+  {
+    name: '后台主路径不得调用旧后端',
+    files: [
+      'src/composables/useAdminParcels.ts',
+      'src/composables/useAdminLogin.ts',
+      'src/composables/useDashboardStats.ts',
+      'src/composables/usePublicConfigBootstrap.ts',
+      'src/views/manage/FileManageView.vue',
+    ],
+    patterns: [
+      /\bFileService\b/,
+      /\/admin\/dashboard\b/,
+      /\/admin\/file\//,
+      /VITE_API_BASE_URL/,
+    ],
   },
   {
     name: '取件流程 composable 不直接依赖路由',
@@ -77,7 +104,7 @@ const rules = [
     name: '裸 axios 只能出现在请求客户端封装内',
     files: ['src/**/*.{ts,vue}'],
     patterns: [/import\s+axios\b/],
-    ignoreFiles: [/^src\/services\/client\.ts$/, /^src\/services\/upload-client\.ts$/],
+    ignoreFiles: [/^src\/services\/client\.ts$/, /^src\/services\/worker-client\.ts$/],
   },
   {
     name: '文件打包能力统一放在 file-processing 工具',

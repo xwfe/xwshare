@@ -104,9 +104,10 @@ export const copyRetrieveCode = async (
 export const copyWgetCommand = (
   retrieveCode: string,
   fileName: string,
+  encryptionKey?: string,
   options: Pick<CopyOptions, 'notify' | 'showMsg'> = {}
 ) => {
-  const command = buildWgetCommand(retrieveCode, fileName)
+  const command = buildWgetCommand(retrieveCode, fileName, encryptionKey)
   void copyToClipboard(command, {
     successMsg: '命令已复制到剪贴板',
     errorMsg: '复制失败，请手动复制命令',

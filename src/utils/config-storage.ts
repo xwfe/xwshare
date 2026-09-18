@@ -28,7 +28,7 @@ export const DEFAULT_PUBLIC_CONFIG: PublicConfig = {
   uploadSize: FILE_SIZE_LIMITS.MAX_FILE_SIZE,
   allowedFileTypes: ['*'],
   allowed_file_types: ['*'],
-  expireStyle: ['day'],
+  expireStyle: ['hour', 'day'],
   code_generate_type: 'secret',
   openUpload: 1,
   max_save_seconds: 0,

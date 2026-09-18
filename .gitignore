@@ -29,3 +29,7 @@ output
 *.sw?
 
 *.tsbuildinfo
+
+# Tool / runtime state
+.playwright-mcp/
+worker/.wrangler/

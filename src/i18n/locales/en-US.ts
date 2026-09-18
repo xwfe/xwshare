@@ -244,7 +244,10 @@ export default {
       retrieveFailure: 'Failed to retrieve file: ',
       networkError: 'Retrieval failed, please try again later: ',
       unknownError: 'Unknown error',
-      previewUnavailable: 'Preview is unavailable, you can still retrieve directly'
+      previewUnavailable: 'Preview is unavailable, you can still retrieve directly',
+      decryptFailed: 'Decryption failed. The key is invalid or the content is damaged',
+      encryptionKeyRequired: 'This parcel is encrypted. Open the full link that includes the key',
+      burnedAfterRead: 'This parcel was burned after read. Save the content now'
     },
     workspace: {
       sendFile: 'Send File',
@@ -381,6 +384,11 @@ export default {
       fileTypeNotAllowed: 'This file type is not allowed. Allowed types: {types}',
       serverError: 'Server response error',
       sendFailed: 'Send failed, please try again later',
+      packingFiles: 'Packing files...',
+      encryptingFile: 'Encrypting file...',
+      encryptingText: 'Encrypting text...',
+      uploadingFile: 'Uploading file...',
+      missingUploadUrl: 'Upload URL is missing',
       expiresAfterCount: 'Expires after {count} times',
       expiresAt: 'Expires at {date}',
       emptyFileError: 'Cannot read empty file',
