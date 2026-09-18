@@ -11,14 +11,7 @@ type WorkerPublicConfig = {
 }
 
 export class ConfigService {
-  static async getConfig(): Promise<ApiResponse<ConfigState>> {
-    throw new Error('System settings are not on Worker yet')
-  }
-
-  static async updateConfig(_config: Partial<ConfigState>): Promise<ApiResponse> {
-    throw new Error('System settings are not on Worker yet')
-  }
-
+  /** 获取公开配置（站点名、限制、开关） */
   static async getUserConfig(): Promise<ApiResponse<PublicConfigPayload>> {
     const res = await workerFetch<WorkerPublicConfig>('/api/config')
     const config = res.data
@@ -35,3 +28,4 @@ export class ConfigService {
     }
   }
 }
+

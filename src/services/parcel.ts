@@ -8,41 +8,9 @@ import type {
   CreateTextParcelRequest,
   CreateFileParcelRequest,
   CreateParcelResponse,
-  PickupResponse,
-  WorkerApiResponse
+  PickupResponse
 } from '@/types/parcel'
-
-/** Worker API 基础路径（开发环境为 wrangler dev server，生产环境同域） */
-const getWorkerBaseUrl = (): string => {
-  const url = import.meta.env.VITE_WORKER_API_URL
-  return typeof url === 'string' && url ? url.replace(/\/+$/, '') : ''
-}
-
-async function workerFetch<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<WorkerApiResponse<T>> {
-  const base = getWorkerBaseUrl()
-  const url = `${base}${path}`
-
-  // 解构 headers 避免 ...rest 覆盖合并后的 headers
-  const { headers: optHeaders, ...rest } = options
-  const res = await fetch(url, {
-    ...rest,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(optHeaders as Record<string, string>)
-    }
-  })
-
-  const json = (await res.json()) as WorkerApiResponse<T>
-
-  if (!res.ok) {
-    throw new Error(json.error || `Worker API error: ${res.status}`)
-  }
-
-  return json
-}
+import { workerFetch } from './worker-client'
 
 export class ParcelService {
   /** 创建文本/Markdown 快递 */

@@ -4,7 +4,11 @@ import { useAdminParcels, useInjectedDarkMode } from '@/composables'
 
 const { t } = useI18n()
 const isDarkMode = useInjectedDarkMode()
-const { items, total, status, isLoading, load, remove } = useAdminParcels()
+const {
+  items, total, status, isLoading,
+  page, totalPages, hasNext, hasPrev,
+  load, remove, changeStatus, nextPage, prevPage
+} = useAdminParcels()
 </script>
 
 <template>
@@ -16,7 +20,7 @@ const { items, total, status, isLoading, load, remove } = useAdminParcels()
           v-model="status"
           class="rounded-lg border px-3 py-2 text-sm"
           :class="isDarkMode ? 'border-zinc-700 bg-zinc-900' : 'border-slate-200 bg-white'"
-          @change="load"
+          @change="changeStatus"
         >
           <option value="">{{ t('fileManage.all') }}</option>
           <option value="PENDING">PENDING</option>
@@ -55,6 +59,26 @@ const { items, total, status, isLoading, load, remove } = useAdminParcels()
           </tr>
         </tbody>
       </table>
+    </div>
+    <!-- 分页控件 -->
+    <div v-if="totalPages > 1" class="flex items-center justify-between text-sm">
+      <button
+        type="button"
+        class="rounded-lg border px-3 py-1.5 disabled:opacity-40"
+        :disabled="!hasPrev"
+        @click="prevPage"
+      >
+        {{ t('common.previous') }}
+      </button>
+      <span class="opacity-70">{{ page }} / {{ totalPages }}</span>
+      <button
+        type="button"
+        class="rounded-lg border px-3 py-1.5 disabled:opacity-40"
+        :disabled="!hasNext"
+        @click="nextPage"
+      >
+        {{ t('common.next') }}
+      </button>
     </div>
   </div>
 </template>
