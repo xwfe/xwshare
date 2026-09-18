@@ -114,7 +114,7 @@ onMounted(() => {
 })
 
 watch(code, (newCode) => {
-  if (newCode.length === 5) {
+  if (newCode.length === 6) {
     void handleSubmit()
   }
 })

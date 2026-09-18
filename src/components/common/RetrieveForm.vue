@@ -65,7 +65,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const isDarkMode = useInjectedDarkMode()
-const codeSlots = ref<string[]>(Array(5).fill(''))
+const codeSlots = ref<string[]>(Array(6).fill(''))
 const inputRefs = ref<HTMLInputElement[]>([])
 
 const joinedCode = computed(() => codeSlots.value.join(''))
@@ -104,8 +104,8 @@ const submitClass = computed(() => {
 })
 
 const syncFromModel = (value: string) => {
-  const chars = value.slice(0, 5).split('')
-  codeSlots.value = Array.from({ length: 5 }, (_, index) => chars[index] ?? '')
+  const chars = value.slice(0, 6).split('')
+  codeSlots.value = Array.from({ length: 6 }, (_, index) => chars[index] ?? '')
 }
 
 const emitCode = () => {
@@ -114,7 +114,7 @@ const emitCode = () => {
 
 const focusInput = async (index: number) => {
   await nextTick()
-  inputRefs.value[Math.max(0, Math.min(index, 4))]?.focus()
+  inputRefs.value[Math.max(0, Math.min(index, 5))]?.focus()
 }
 
 const setInputRef = (el: unknown, index: number) => {
@@ -125,8 +125,8 @@ const setInputRef = (el: unknown, index: number) => {
 
 const fillFrom = (value: string, startIndex: number) => {
   const chars = value
-    .replace(/\s/g, '')
-    .slice(0, 5 - startIndex)
+    .replace(/[\s-]/g, '')
+    .slice(0, 6 - startIndex)
     .split('')
   if (chars.length === 0) return
 
@@ -134,7 +134,7 @@ const fillFrom = (value: string, startIndex: number) => {
     codeSlots.value[startIndex + offset] = char
   })
   emitCode()
-  void focusInput(Math.min(startIndex + chars.length, 4))
+  void focusInput(Math.min(startIndex + chars.length, 5))
 }
 
 const handleInput = (event: Event, index: number) => {
@@ -149,7 +149,7 @@ const handleInput = (event: Event, index: number) => {
   codeSlots.value[index] = value.slice(-1)
   emitCode()
 
-  if (value && index < 4) {
+  if (value && index < 5) {
     void focusInput(index + 1)
   }
 }

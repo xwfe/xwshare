@@ -87,7 +87,7 @@ export const ROUTE_NAMES = {
 export const REGEX_PATTERNS = {
   EMAIL: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   PHONE: /^1[3-9]\d{9}$/,
-  CODE: /^[A-Za-z0-9]{4,8}$/ // 取件码格式
+  CODE: /^[A-Za-z0-9]{6}$/ // 取件码格式：6 位字母数字
 } as const
 
 // 默认配置

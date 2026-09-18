@@ -62,6 +62,17 @@
               v-model:expiration-value="expirationValue"
               :options="expirationOptions"
             />
+            <ParcelOptions
+              v-model:burn-after-read="burnAfterRead"
+              v-model:max-downloads="maxDownloads"
+              v-model:enable-encryption="enableEncryption"
+            />
+            <TurnstileWidget
+              v-if="turnstileSiteKey"
+              v-model="turnstileToken"
+              :site-key="turnstileSiteKey"
+              :theme="isDarkMode ? 'dark' : 'light'"
+            />
             <button
               type="submit"
               :disabled="isSubmitting"
@@ -143,6 +154,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { CloudDownloadIcon, HistoryIcon, LoaderCircleIcon, SendIcon } from 'lucide-vue-next'
@@ -151,6 +163,8 @@ import SendTypeSelector from '@/components/common/SendTypeSelector.vue'
 import FileUploadArea from '@/components/common/FileUploadArea.vue'
 import ExpirationSelector from '@/components/common/ExpirationSelector.vue'
 import TextInputArea from '@/components/common/TextInputArea.vue'
+import ParcelOptions from '@/components/common/ParcelOptions.vue'
+import TurnstileWidget from '@/components/common/TurnstileWidget.vue'
 import SideDrawer from '@/components/common/SideDrawer.vue'
 import SentRecordList from '@/components/common/SentRecordList.vue'
 import SentRecordDetailModal from '@/components/common/SentRecordDetailModal.vue'
@@ -159,6 +173,8 @@ import { useInjectedDarkMode, useSendFlow } from '@/composables'
 const isDarkMode = useInjectedDarkMode()
 const { t } = useI18n()
 const router = useRouter()
+const turnstileToken = ref('')
+const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || ''
 const {
   sendType,
   selectedFile,
@@ -177,6 +193,9 @@ const {
   sendRecords,
   uploadDescription,
   expirationOptions,
+  burnAfterRead,
+  maxDownloads,
+  enableEncryption,
   closeDetails,
   copySentRecordCode,
   copySentRecordLink,

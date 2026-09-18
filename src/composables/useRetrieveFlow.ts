@@ -38,7 +38,7 @@ export function useRetrieveFlow() {
   const renderedContent = ref('')
   const normalizedCode = computed(() => code.value.trim())
   const isWorking = computed(() => isInspecting.value || isRetrieving.value)
-  const hasValidCode = computed(() => normalizedCode.value.length === 5)
+  const hasValidCode = computed(() => normalizedCode.value.length === 6)
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 ' + t('fileSize.bytes')

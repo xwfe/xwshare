@@ -35,6 +35,9 @@ export function useSendFlow() {
   const selectedRecord = ref<SentFileRecord | null>(null)
   const isSubmitting = ref(false)
   const fileHash = ref('')
+  const burnAfterRead = ref(false)
+  const maxDownloads = ref(0)
+  const enableEncryption = ref(false)
   const sendRecords = computed(() => fileDataStore.shareData)
   const uploadDescription = computed(() =>
     t('send.uploadArea.descriptionWithLimit', {
@@ -402,6 +405,9 @@ export function useSendFlow() {
     sendRecords,
     uploadDescription,
     expirationOptions,
+    burnAfterRead,
+    maxDownloads,
+    enableEncryption,
     closeDetails,
     deleteRecord,
     copySentRecordCode: sentRecordActions.copyCode,
