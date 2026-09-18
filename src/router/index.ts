@@ -58,15 +58,6 @@ const routes: RouteRecordRaw[] = [
           ...adminPageMeta,
           title: 'files'
         }
-      },
-      {
-        path: 'settings',
-        name: ROUTE_NAMES.SETTINGS,
-        component: () => import('@/views/manage/SystemSettingsView.vue'),
-        meta: {
-          ...adminPageMeta,
-          title: 'settings'
-        }
       }
     ]
   },

@@ -1,12 +1,12 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
-import { FileService, ParcelService } from '@/services'
+import { ParcelService } from '@/services'
 import { useAlertStore } from '@/stores/alertStore'
 import { useFileDataStore } from '@/stores/fileData'
-import type { ReceivedFileRecord, ShareMetadataResponse, ShareSelectResponse } from '@/types'
+import type { ReceivedFileRecord } from '@/types'
 import { copyToClipboard } from '@/utils/clipboard'
-import { getErrorMessage, getResponseMessage } from '@/utils/common'
+import { getErrorMessage } from '@/utils/common'
 import { renderMarkdownPreview } from '@/utils/content-preview'
 import { decryptText, extractEncryptionKey } from '@/utils/crypto'
 import { downloadReceivedRecord } from '@/utils/download-action'
@@ -23,8 +23,6 @@ export function useRetrieveFlow() {
   const { receiveData: records } = storeToRefs(fileStore)
 
   const code = ref('')
-  const inspectedFile = ref<ShareMetadataResponse | null>(null)
-  const isInspecting = ref(false)
   const isRetrieving = ref(false)
   const inputStatus = ref<InputStatus>({
     readonly: false,
@@ -38,7 +36,7 @@ export function useRetrieveFlow() {
   const showMediaPreview = ref(false)
   const renderedContent = ref('')
   const normalizedCode = computed(() => code.value.trim())
-  const isWorking = computed(() => isInspecting.value || isRetrieving.value)
+  const isWorking = computed(() => isRetrieving.value)
   const hasValidCode = computed(() => normalizedCode.value.length === 6)
 
   const formatFileSize = (bytes: number) => {
@@ -52,66 +50,7 @@ export function useRetrieveFlow() {
       t('fileSize.tb')
     ]
     const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-  }
-
-  const createRecord = (detail: ShareSelectResponse): ReceivedFileRecord => {
-    const isText =
-      typeof detail.is_text === 'boolean'
-        ? detail.is_text
-        : detail.type
-          ? detail.type === 'text'
-          : detail.name === 'Text' && !detail.text.startsWith('/share/download')
-    const content = isText ? (detail.content ?? detail.text) : null
-    const downloadUrl = isText ? null : (detail.download_url ?? detail.text)
-
-    return {
-      id: Date.now(),
-      code: detail.code,
-      filename: detail.name,
-      size: formatFileSize(detail.size),
-      downloadUrl,
-      content,
-      date: new Date().toLocaleString(),
-      type: isText ? 'text' : 'file',
-      remainingDownloads: detail.remaining_downloads
-    }
-  }
-
-  const resetInspection = () => {
-    inspectedFile.value = null
-    error.value = ''
-  }
-
-  const inspectCode = async () => {
-    if (!hasValidCode.value) {
-      alertStore.showAlert(t('retrieve.messages.invalidCode'), 'error')
-      return
-    }
-
-    isInspecting.value = true
-    inputStatus.value.readonly = true
-    inputStatus.value.loading = true
-    error.value = ''
-
-    try {
-      const res = await FileService.inspectFile(normalizedCode.value)
-      if (res.code === 200 && res.detail) {
-        inspectedFile.value = res.detail
-      } else {
-        inspectedFile.value = null
-        error.value = getResponseMessage(res, t('retrieve.messages.unknownError'))
-        alertStore.showAlert(t('retrieve.messages.retrieveFailure') + error.value, 'error')
-      }
-    } catch {
-      inspectedFile.value = null
-      error.value = t('retrieve.messages.previewUnavailable')
-      alertStore.showAlert(error.value, 'warning')
-    } finally {
-      isInspecting.value = false
-      inputStatus.value.readonly = false
-      inputStatus.value.loading = false
-    }
+    return parseFloat((bytes / k ** i).toFixed(2)) + ' ' + sizes[i]
   }
 
   const handleSubmit = async () => {
@@ -127,73 +66,54 @@ export function useRetrieveFlow() {
 
     try {
       const encryptionKey = extractEncryptionKey(window.location.hash) || undefined
-      let parcelData: ReceivedFileRecord | null = null
+      const pRes = await ParcelService.pickup(normalizedCode.value)
+      let content = pRes.content ?? null
 
-      // 优先通过 Cloudflare Worker Parcel API 取件
-      try {
-        const pRes = await ParcelService.pickup(normalizedCode.value)
-        let content = pRes.content ?? null
-
-        if (pRes.encrypted && content) {
-          if (encryptionKey) {
-            try {
-              content = await decryptText(content, encryptionKey)
-            } catch (decErr) {
-              console.error('Text decryption failed:', decErr)
-              alertStore.showAlert('解密失败，密钥无效或内容损坏', 'error')
-            }
-          } else {
-            alertStore.showAlert('此快递已开启端到端加密，请使用包含密钥的完整链接访问', 'warning')
+      if (pRes.encrypted && content) {
+        if (encryptionKey) {
+          try {
+            content = await decryptText(content, encryptionKey)
+          } catch (decErr) {
+            console.error('Text decryption failed:', decErr)
+            alertStore.showAlert(t('retrieve.messages.decryptFailed'), 'error')
           }
-        }
-
-        parcelData = {
-          id: Date.now(),
-          code: normalizedCode.value,
-          filename: pRes.fileName || pRes.title || (pRes.type === 'file' ? 'File' : 'Text'),
-          size: pRes.fileSize
-            ? formatFileSize(pRes.fileSize)
-            : content
-              ? `${(content.length / 1024).toFixed(2)} KB`
-              : '0 KB',
-          downloadUrl: pRes.downloadUrl ?? null,
-          content,
-          date: new Date().toLocaleString(),
-          type: pRes.type === 'file' ? 'file' : 'text',
-          burnAfterRead: pRes.burnAfterRead,
-          encrypted: pRes.encrypted,
-          encryptionKey
-        }
-
-        if (pRes.burnAfterRead) {
-          alertStore.showAlert('🔥 阅后即焚内容已销毁，请妥善保存当前内容', 'warning')
-        }
-      } catch (workerErr: unknown) {
-        console.warn('ParcelService pickup error, attempting legacy fallback:', workerErr)
-        // 回退原有 FileService
-        const res = await FileService.selectFile(normalizedCode.value)
-        if (res.code === 200 && res.detail) {
-          parcelData = createRecord(res.detail)
         } else {
-          throw workerErr
+          alertStore.showAlert(t('retrieve.messages.encryptionKeyRequired'), 'warning')
         }
       }
 
-      if (parcelData) {
-        const existingIndex = fileStore.receiveData.findIndex(
-          (file) => file.code === parcelData!.code
-        )
-        if (existingIndex !== -1) {
-          fileStore.deleteReceiveData(existingIndex)
-        }
-        fileStore.addReceiveData(parcelData)
-        selectedRecord.value = parcelData
-        if (parcelData.content) {
-          showPreview.value = true
-        }
-        inspectedFile.value = null
-        alertStore.showAlert(t('retrieve.messages.retrieveSuccess'), 'success')
+      const parcelData: ReceivedFileRecord = {
+        id: Date.now(),
+        code: normalizedCode.value,
+        filename: pRes.fileName || pRes.title || (pRes.type === 'file' ? 'File' : 'Text'),
+        size: pRes.fileSize
+          ? formatFileSize(pRes.fileSize)
+          : content
+            ? `${(content.length / 1024).toFixed(2)} KB`
+            : '0 KB',
+        downloadUrl: pRes.downloadUrl ?? null,
+        content,
+        date: new Date().toLocaleString(),
+        type: pRes.type === 'file' ? 'file' : 'text',
+        burnAfterRead: pRes.burnAfterRead,
+        encrypted: pRes.encrypted,
+        encryptionKey
       }
+
+      if (pRes.burnAfterRead) {
+        alertStore.showAlert(t('retrieve.messages.burnedAfterRead'), 'warning')
+      }
+
+      const existingIndex = fileStore.receiveData.findIndex((file) => file.code === parcelData.code)
+      if (existingIndex !== -1) {
+        fileStore.deleteReceiveData(existingIndex)
+      }
+      fileStore.addReceiveData(parcelData)
+      selectedRecord.value = parcelData
+      if (parcelData.content) {
+        showPreview.value = true
+      }
+      alertStore.showAlert(t('retrieve.messages.retrieveSuccess'), 'success')
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err, t('retrieve.messages.unknownError'))
       error.value = errorMessage
@@ -262,7 +182,6 @@ export function useRetrieveFlow() {
     previewMediaRecord.value = null
   }
 
-  // 页面挂载时自动解析 URL hash 中的取件码（View 层 watch 会在 code 长度达到 6 时自动触发提交）
   onMounted(() => {
     const urlParams = new URLSearchParams(window.location.search)
     let autoCode = urlParams.get('code')
@@ -291,10 +210,6 @@ export function useRetrieveFlow() {
   )
 
   watch(normalizedCode, (nextCode) => {
-    if (inspectedFile.value && inspectedFile.value.code !== nextCode) {
-      resetInspection()
-    }
-
     if (nextCode.length < 6 && error.value) {
       error.value = ''
     }
@@ -302,8 +217,6 @@ export function useRetrieveFlow() {
 
   return {
     code,
-    inspectedFile,
-    isInspecting,
     isRetrieving,
     isWorking,
     hasValidCode,
@@ -323,8 +236,6 @@ export function useRetrieveFlow() {
     deleteRecord,
     downloadRecord,
     handleSubmit,
-    inspectCode,
-    resetInspection,
     showFilePreview,
     showContentPreview,
     toggleDrawer,

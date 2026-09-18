@@ -90,7 +90,6 @@ import {
   MenuIcon,
   XIcon,
   FolderIcon,
-  CogIcon,
   LayoutDashboardIcon,
   LogOutIcon
 } from 'lucide-vue-next'
@@ -122,12 +121,6 @@ const menuItems: MenuItem[] = [
     name: t('admin.fileManage.title'),
     icon: FolderIcon,
     redirect: ROUTES.FILE_MANAGE
-  },
-  {
-    id: ROUTE_NAMES.SETTINGS,
-    name: t('admin.settings.title'),
-    icon: CogIcon,
-    redirect: ROUTES.SETTINGS
   }
 ]
 

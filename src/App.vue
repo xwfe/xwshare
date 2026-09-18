@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import { storeToRefs } from 'pinia'
 import { RouterLink, RouterView } from 'vue-router'
 import { LogInIcon, ShieldCheckIcon } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
@@ -9,24 +8,14 @@ import LanguageSwitcher from './components/common/LanguageSwitcher.vue'
 import AlertComponent from '@/components/common/AlertComponent.vue'
 import { useAdminSession, useAppShell } from '@/composables'
 import { ROUTES } from '@/constants'
-import { useConfigStore } from '@/stores/configStore'
 import { useAdminStore } from '@/stores/adminStore'
 
-const {
-  isDarkMode,
-  isLoading,
-  routeTransitionMode,
-  routeTransitionName,
-  routeViewKey,
-  showGlobalControls
-} = useAppShell()
+const { isDarkMode, isLoading, routeTransitionMode, routeTransitionName, routeViewKey, showGlobalControls } =
+  useAppShell()
 
-const configStore = useConfigStore()
-const { config } = storeToRefs(configStore)
 const adminStore = useAdminStore()
 const { t } = useI18n()
 const { verifySession } = useAdminSession()
-const showAdminAddress = computed(() => config.value.showAdminAddr === 1)
 const adminEntryLabel = computed(() =>
   t(adminStore.isAuthenticated ? 'admin.session.loggedIn' : 'admin.session.loggedOut')
 )
@@ -43,8 +32,7 @@ onMounted(() => {
       class="fixed top-4 right-4 z-50 flex items-center gap-2 sm:top-6 sm:right-6 sm:gap-3"
     >
       <RouterLink
-        v-if="showAdminAddress"
-        :to="ROUTES.ADMIN"
+        :to="adminStore.isAuthenticated ? ROUTES.ADMIN : ROUTES.LOGIN"
         class="rounded-full border p-2.5 shadow-sm backdrop-blur-xl transition-all duration-300 hover:scale-105 active:scale-95 sm:p-3"
         :class="
           adminStore.isAuthenticated

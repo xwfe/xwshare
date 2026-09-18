@@ -1,26 +1,19 @@
 import { ConfigService } from '@/services'
-import { useAlertStore } from '@/stores/alertStore'
 import { useConfigStore } from '@/stores/configStore'
 
 export function usePublicConfigBootstrap() {
-  const alertStore = useAlertStore()
   const configStore = useConfigStore()
 
   const syncPublicConfig = async () => {
-    const res = await ConfigService.getUserConfig()
-
-    if (res.code !== 200 || !res.detail) {
-      return
-    }
-
-    configStore.applyPublicMeta(res.detail.meta)
-    const notifyMessage = configStore.applyRemoteConfig(res.detail.config)
-    if (notifyMessage) {
-      alertStore.showAlert(notifyMessage, 'success')
+    try {
+      const res = await ConfigService.getUserConfig()
+      if (res.code !== 200 || !res.detail) return
+      if (res.detail.meta) configStore.applyPublicMeta(res.detail.meta)
+      configStore.applyRemoteConfig(res.detail.config)
+    } catch {
+      // Worker 不可达时用本地默认配置，不打断寄取件
     }
   }
 
-  return {
-    syncPublicConfig
-  }
+  return { syncPublicConfig }
 }

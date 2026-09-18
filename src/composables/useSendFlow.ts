@@ -1,7 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAlertStore } from '@/stores/alertStore'
-import { useAdminStore } from '@/stores/adminStore'
 import { useConfigStore } from '@/stores/configStore'
 import { useFileDataStore } from '@/stores/fileData'
 import type { SendType, SentFileRecord, UploadProgress } from '@/types'
@@ -16,7 +15,6 @@ import { useSendSubmit } from './useSendSubmit'
 export function useSendFlow() {
   const { t } = useI18n()
   const alertStore = useAlertStore()
-  const adminStore = useAdminStore()
   const configStore = useConfigStore()
   const fileDataStore = useFileDataStore()
   const config = computed(() => configStore.config)
@@ -80,8 +78,7 @@ export function useSendFlow() {
     alertStore.showAlert(message, type)
   }
   const sentRecordActions = createSentRecordActions(notifyCopyResult)
-  const { resetPresignUpload, submitFile, submitText } = useSendSubmit({
-    getMaxFileSize: () => configStore.uploadSizeLimit,
+  const { submitFile, submitText } = useSendSubmit({
     notify: (message, type) => alertStore.showAlert(message, type),
     translate: t,
     onProgress: (progress: UploadProgress) => {
@@ -106,7 +103,7 @@ export function useSendFlow() {
   })
 
   const checkOpenUpload = () => {
-    if (config.value.openUpload === 0 && !adminStore.hasToken) {
+    if (config.value.openUpload === 0) {
       alertStore.showAlert(t('send.messages.guestUploadDisabled'), 'error')
       return false
     }
@@ -320,7 +317,6 @@ export function useSendFlow() {
           selectedFiles: selectedFiles.value,
           expireValue,
           expireStyle: expirationMethod.value,
-          enableChunk: Boolean(config.value.enableChunk),
           validateFileSize: checkFileSize,
           burnAfterRead: burnAfterRead.value,
           maxDownloads: maxDownloads.value,
@@ -367,7 +363,6 @@ export function useSendFlow() {
         textContent.value = ''
         turnstileToken.value = ''
         resetUploadProgress()
-        resetPresignUpload()
         selectedRecord.value = newRecord
         await sentRecordActions.copyLink(newRecord)
       } else {
