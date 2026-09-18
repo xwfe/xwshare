@@ -12,7 +12,7 @@
 
 ## 本地怎么跑
 
-需要：Node.js 18+、pnpm 8+。
+需要：Node.js 22+、pnpm 8+。Worker 当前使用 Wrangler 4.x，Node 18 已不再满足其运行要求。
 
 ```bash
 git clone https://github.com/xwfe/xwshare.git

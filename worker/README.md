@@ -34,6 +34,8 @@ src/
 
 ## 本地
 
+需要 Node.js 22+。当前 Wrangler 版本线为 4.x。
+
 ```bash
 pnpm install
 pnpm run db:init:local    # 只第一次。不跑的话寄件报 D1 表不存在

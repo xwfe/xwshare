@@ -114,10 +114,10 @@
 - [x] 补并发阅后即焚、最大下载次数、Cron 清理回归
 - [ ] 限速换 Cloudflare 自带 Rate Limiting 或 Durable Object，丢掉进程内 `Map`
 - [ ] 接 Cloudflare Logs / Logpush 告警策略；当前只产出结构化事件
-- [ ] wrangler / workers-types 从 2024 年版本往前升一档；继续独立做，不和功能混在同一提交
+- [x] Wrangler 升到 4.130.0、Workers Types 升到 5.20260908.1，并保持独立维护提交
 
 ---
 
 ## 建议的下一轮
 
-阶段 5 的本地自动回归已覆盖主要 Worker 状态机。下一轮阶段 5 只做限速后端与生产日志接入；Wrangler / Workers Types 升级继续作为独立维护任务。
+阶段 5 的本地自动回归已覆盖主要 Worker 状态机，Wrangler / Workers Types 维护升级也已完成。下一轮阶段 5 只做限速后端与生产日志接入。
