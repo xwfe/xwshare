@@ -181,6 +181,10 @@ export function useSendSubmit(options: UseSendSubmitOptions) {
         }
       }
     } catch (workerErr) {
+      // 如果开启了加密，不允许回退到不支持加密的旧 API（避免明文泄露）
+      if (enableEncryption) {
+        throw workerErr
+      }
       console.warn('Worker Parcel upload failed, falling back:', workerErr)
       const fallbackRes = enableChunk
         ? await handleChunkUpload(fileToUpload, expireValue, expireStyle)
@@ -228,6 +232,10 @@ export function useSendSubmit(options: UseSendSubmitOptions) {
         }
       }
     } catch (workerErr) {
+      // 如果开启了加密，不允许回退到旧 API（避免明文泄露）
+      if (enableEncryption) {
+        throw workerErr
+      }
       console.warn('Worker Parcel create text failed, falling back:', workerErr)
       const fallbackRes = await FileService.uploadText(text, expireValue, expireStyle)
       return fallbackRes as ApiResponse<{ code?: string; name?: string; encryptionKey?: string }>

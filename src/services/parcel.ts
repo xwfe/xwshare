@@ -25,12 +25,14 @@ async function workerFetch<T>(
   const base = getWorkerBaseUrl()
   const url = `${base}${path}`
 
+  // 解构 headers 避免 ...rest 覆盖合并后的 headers
+  const { headers: optHeaders, ...rest } = options
   const res = await fetch(url, {
+    ...rest,
     headers: {
       'Content-Type': 'application/json',
-      ...options.headers
-    },
-    ...options
+      ...(optHeaders as Record<string, string>)
+    }
   })
 
   const json = (await res.json()) as WorkerApiResponse<T>

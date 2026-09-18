@@ -18,3 +18,7 @@ crons = ["*/15 * * * *"]
 [vars]
 # PICKUP_CODE_SECRET = "change_me"
 # TURNSTILE_SECRET_KEY = "change_me"
+
+# 开发环境覆盖（wrangler dev 时自动应用）
+[env.development.vars]
+ENVIRONMENT = "development"

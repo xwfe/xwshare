@@ -1,4 +1,4 @@
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { FileService, ParcelService } from '@/services'
@@ -262,22 +262,19 @@ export function useRetrieveFlow() {
     previewMediaRecord.value = null
   }
 
-  // 页面挂载时自动解析 URL 中包含的取件码与密钥并自动触发取件
+  // 页面挂载时自动解析 URL hash 中的取件码（View 层 watch 会在 code 长度达到 6 时自动触发提交）
   onMounted(() => {
     const urlParams = new URLSearchParams(window.location.search)
     let autoCode = urlParams.get('code')
     if (!autoCode && window.location.hash.includes('code=')) {
       const hashQuery = window.location.hash.split('?')[1]
       if (hashQuery) {
-        const hp = new URLSearchParams(hashQuery.split('#')[0])
+        const hp = new URLSearchParams(hashQuery)
         autoCode = hp.get('code')
       }
     }
     if (autoCode && autoCode.trim().length === 6) {
       code.value = autoCode.trim()
-      void nextTick(() => {
-        void handleSubmit()
-      })
     }
   })
 

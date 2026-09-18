@@ -1,4 +1,6 @@
 import type { AdminFileViewItem, ApiResponse, ReceivedFileRecord } from '@/types'
+import { ParcelService } from '@/services/parcel'
+import { decryptFile } from '@/utils/crypto'
 import { buildDownloadUrl } from '@/utils/share-url'
 
 const unsafeFilenamePattern = new RegExp(
@@ -19,9 +21,6 @@ const saveBlobAsFile = async (blob: Blob, filename: string) => {
   const { saveAs } = await fileSaverLoader
   saveAs(blob, filename)
 }
-
-import { ParcelService } from '@/services/parcel'
-import { decryptFile } from '@/utils/crypto'
 
 export async function downloadReceivedRecord(record: ReceivedFileRecord): Promise<void> {
   if (record.downloadUrl) {

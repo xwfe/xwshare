@@ -2,9 +2,9 @@
 /**
  * 快递高级选项：阅后即焚 + 下载次数限制 + E2E 加密
  */
-import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { FlameIcon, DownloadIcon, LockIcon } from 'lucide-vue-next'
+import { useInjectedDarkMode } from '@/composables'
 
 const { t } = useI18n()
 
@@ -20,7 +20,7 @@ const emit = defineEmits<{
   'update:enableEncryption': [value: boolean]
 }>()
 
-const isDarkMode = inject('isDarkMode')
+const isDarkMode = useInjectedDarkMode()
 </script>
 
 <template>

@@ -16,7 +16,8 @@ export function buildAbsoluteUrl(path: string): string {
 
 export function buildRetrieveUrl(code: string, encryptionKey?: string): string {
   const base = `${window.location.origin}/#/?code=${code}`
-  return encryptionKey ? `${base}#key=${encryptionKey}` : base
+  // 密钥拼接在 hash query 内用 &key=，避免双 # 导致部分平台截断
+  return encryptionKey ? `${base}&key=${encryptionKey}` : base
 }
 
 export function buildDownloadUrl(downloadUrl: string | null): string {

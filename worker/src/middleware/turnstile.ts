@@ -2,9 +2,16 @@ import { Context, Next } from 'hono';
 import { Env } from '../types/env';
 
 export async function turnstileMiddleware(c: Context<{ Bindings: Env }>, next: Next) {
-  // 若未配置 Secret Key 或为测试占位符，跳过验证（方便本地开发）
+  const isDev = c.env.ENVIRONMENT === 'development';
+
+  // 未配置 Secret Key
   if (!c.env.TURNSTILE_SECRET_KEY || c.env.TURNSTILE_SECRET_KEY === 'your-turnstile-secret-key') {
-    return next();
+    if (isDev) {
+      // 开发环境允许跳过（本地调试用）
+      return next();
+    }
+    // 生产环境缺少配置 → Fail-Closed，不能静默放行
+    return c.json({ error: 'Turnstile not configured', code: 'SERVER_MISCONFIGURED' }, 500);
   }
 
   const token = c.req.header('x-turnstile-token');
@@ -22,10 +29,10 @@ export async function turnstileMiddleware(c: Context<{ Bindings: Env }>, next: N
     body: formData,
   });
   const outcome: any = await result.json();
-  
+
   if (!outcome.success) {
     return c.json({ error: 'Invalid turnstile token', code: 'INVALID_TOKEN' }, 403);
   }
-  
+
   await next();
 }
