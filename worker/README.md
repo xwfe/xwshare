@@ -1,4 +1,4 @@
-# xshare Worker
+# xwshare Worker
 
 寄件 / 取件 / 管理后台 API。Hono 跑在 Cloudflare Workers 上，短文本进 D1，文件经本进程写入 R2。
 
@@ -51,13 +51,13 @@ pnpm run typecheck
 ```bash
 pnpm exec wrangler login
 
-pnpm exec wrangler d1 create drop-db
+pnpm exec wrangler d1 create xwshare-db
 # 把输出的 database_id 填进 wrangler.toml
 
 pnpm run db:init
 # 这是 --remote。漏了这步，生产库是空的，寄件 500
 
-pnpm exec wrangler r2 bucket create drop-files
+pnpm exec wrangler r2 bucket create xwshare-files
 
 pnpm exec wrangler secret put PICKUP_CODE_SECRET
 pnpm exec wrangler secret put TURNSTILE_SECRET_KEY
@@ -68,7 +68,7 @@ pnpm exec wrangler secret put ADMIN_PASSWORD
 pnpm run deploy
 ```
 
-D1 库名、R2 桶名仍是 `drop-db` / `drop-files`，和 wrangler 绑定一致，改名要同步改 `package.json` 的 `db:init*` 脚本。
+D1 库名、R2 桶名是 `xwshare-db` / `xwshare-files`，与 wrangler 绑定和 `package.json` 的 `db:init*` 脚本保持一致。
 
 ---
 
@@ -103,7 +103,7 @@ D1 库名、R2 桶名仍是 `drop-db` / `drop-files`，和 wrangler 绑定一致
 | GET | `/api/admin/stats` | 无 | 仪表盘数字。要 `Authorization: Bearer` |
 | GET | `/api/admin/parcels` | 无 | 快递列表，`status` / `limit` / `offset`。要 Bearer |
 | DELETE | `/api/admin/parcels/:id` | 无 | 标 DELETED，文件同时删 R2。要 Bearer |
-| GET | `/` | 无 | `{ status: 'ok', service: 'xshare-worker' }` |
+| GET | `/` | 无 | `{ status: 'ok', service: 'xwshare-worker' }` |
 
 限速加在寄件和取件上：同一 isolate 内每 IP 每分钟 10 次，超了 429 `RATE_LIMIT_EXCEEDED`。
 

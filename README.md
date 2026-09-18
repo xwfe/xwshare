@@ -1,10 +1,10 @@
-# xshare
+# xwshare
 
 匿名文件 / 文本快递柜。寄件人拿到 **6 位取件码**（大写字母 + 数字，不含 `0/O/1/I/L`），收件人输入取件码或打开分享链接即可取走。
 
-前端是 Vue 3，后端是 Cloudflare Worker（Hono + D1 + R2）。仓库从 [FileCodeBox](https://github.com/vastsa/FileCodeBox) 前端迁过来，界面文案和 PWA 名称里还能看到 FileCodeBox / Drop，产品名以本仓库为准。
+前端是 Vue 3，后端是 Cloudflare Worker（Hono + D1 + R2）。当前运行时已经统一为 xwshare，不依赖旧后端。
 
-**现在只跑前端 + Worker 就能寄件、取件、进管理后台。** 旧 Python FileCodeBox API 已从运行时剔除。后续计划见 [docs/roadmap.md](docs/roadmap.md)。
+**现在只跑前端 + Worker 就能寄件、取件、进管理后台。** 后续计划见 [docs/roadmap.md](docs/roadmap.md)。
 
 ---
 
@@ -36,7 +36,7 @@ pnpm dev
 # Vite 已把 /api 反代到 8787，所以 .env.development 里 VITE_WORKER_API_URL 留空即可
 ```
 
-浏览器打开 `http://localhost:5173`。寄文本 / 文件、取件都走 Worker。右上角盾牌 / 登录图标进后台，口令是 **`xshare-dev`**（`pnpm dev` 已经带上 `ADMIN_PASSWORD`）。未登录打开 `/#/admin` 会跳到登录页。
+浏览器打开 `http://localhost:5173`。寄文本 / 文件、取件都走 Worker。右上角盾牌 / 登录图标进后台，口令是 **`xwshare-dev`**（`pnpm dev` 已经带上 `ADMIN_PASSWORD`）。未登录打开 `/#/admin` 会跳到登录页。
 
 如果 `pnpm run` 报 `ERR_PNPM_IGNORED_BUILDS`，不要跟那个提示去改安全策略；直接跑 `./node_modules/.bin/wrangler` / `./node_modules/.bin/vite`。
 
@@ -48,7 +48,7 @@ pnpm dev
 
 详细命令在 [worker/README.md](worker/README.md)，这里只写顺序和容易踩的坑。
 
-1. 在 Cloudflare 建 D1（库名 `drop-db`）和 R2（桶名 `drop-files`），把 `database_id` 填进 `worker/wrangler.toml`。
+1. 在 Cloudflare 建 D1（库名 `xwshare-db`）和 R2（桶名 `xwshare-files`），把 `database_id` 填进 `worker/wrangler.toml`。
 2. 对**远程**库执行 `pnpm run db:init`。只跑了 `db:init:local` 的话，生产寄件会报表不存在。
 3. 设置三个 Secret：`PICKUP_CODE_SECRET`（自己生成一段长随机串，用来哈希取件码）、`TURNSTILE_SECRET_KEY`、`ADMIN_PASSWORD`（后台登录口令，至少 6 位）。生产没配 Turnstile Secret，所有寄件接口直接 **500**，不是静默放行。没配管理员口令，后台登录 **500**。
 4. `cd worker && pnpm run deploy`。
@@ -56,7 +56,7 @@ pnpm dev
 
 ```bash
 pnpm build
-npx wrangler pages deploy dist --project-name xshare
+npx wrangler pages deploy dist --project-name xwshare
 ```
 
 `pnpm build` 会先跑架构分层检查（`scripts/check-architecture.mjs`）和 `vue-tsc`。检查失败时构建直接停，不会出 `dist/`。
@@ -79,7 +79,7 @@ npx wrangler pages deploy dist --project-name xshare
 - **没有**旧后台那些边角：视图预设、批量策略、系统设置页、分片秒传
 - **没有** Service Worker，不能离线用。`public/manifest.json` 只让浏览器显示“可安装”
 - **没有**测试套件
-- 仓库里 **没有** LICENSE 文件
+- 许可证为 **GPL-3.0**，见 [LICENSE](LICENSE)
 
 安全模型怎么工作、哪些地方还是空的，写在 [ARCHITECTURE.md](ARCHITECTURE.md)，不在这里重复。
 

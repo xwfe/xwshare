@@ -17,7 +17,7 @@
 
 寄取件只走 `src/services/parcel.ts`（`fetch`）。`VITE_WORKER_API_URL` 为空时用相对路径 `/api`，开发环境由 Vite 反代到 8787。
 
-Worker 挂了就报错，**不会**再回退到旧 Python API。寄取件和管理后台最小集都打 Worker。仓库里还留着 `FileService` / axios 和旧后台大页（`useAdminFiles`、系统设置），主路径不再调用。
+Worker 挂了就报错，**不会**再回退到旧 API。寄取件和管理后台最小集都打 Worker。旧 axios 请求客户端和未使用的 multipart 辅助代码已经删除。
 
 ---
 

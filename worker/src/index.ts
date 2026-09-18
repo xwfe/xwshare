@@ -12,7 +12,7 @@ app.use('*', corsMiddleware);
 app.route('/', parcelRouter);
 app.route('/', adminRouter);
 
-app.get('/', (c) => c.json({ status: 'ok', service: 'xshare-worker' }));
+app.get('/', (c) => c.json({ status: 'ok', service: 'xwshare-worker' }));
 
 export default {
   fetch: app.fetch,

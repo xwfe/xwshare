@@ -2,7 +2,7 @@
   <div class="p-6">
     <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <p class="text-sm" :class="[mutedTextClass]">FileCodeBox Admin</p>
+        <p class="text-sm" :class="[mutedTextClass]">xwshare Admin</p>
         <h2 class="text-2xl font-bold" :class="[primaryTextClass]">
           {{ t('admin.dashboard.title') }}
         </h2>

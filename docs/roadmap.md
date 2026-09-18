@@ -1,6 +1,6 @@
 # 后续计划
 
-更新日期：2026-09-11
+更新日期：2026-09-19
 
 这份文件是后续工作的唯一计划入口。怎么跑见 [README.md](../README.md)，现状怎么工作见 [ARCHITECTURE.md](../ARCHITECTURE.md)。
 
@@ -8,12 +8,12 @@
 
 ## 主要矛盾
 
-寄取件和管理后台最小集都打 Worker，旧 Python 进程可以从运行时关掉。仓库里还留着 `FileService` / axios 和旧后台大页，主路径不再调用。
+寄取件和管理后台最小集都打 Worker，旧后端已经退出运行时；阶段 4 已完成品牌、许可和死代码清理。
 
-次要问题（最多盯这两件，别平行铺开）：
+当前主要缺口：
 
-1. 名字三套并行：仓库和 Worker 叫 xshare，界面叫 FileCodeBox，PWA 叫 Drop
-2. 没有测试，也没有生产可观测性
+1. 没有测试
+2. 没有生产可观测性
 
 ---
 
@@ -96,10 +96,11 @@
 
 ## 阶段 4：名字、许可、名实相符
 
-- 界面、`package.json`、`manifest.json`、控制台 banner 统一为 xshare
-- 补 LICENSE（若仍用 MIT，就把文件加进仓库；README 不要再空口写 MIT）
-- 有 Service Worker 再写 PWA；否则把 manifest 当「可添加到主屏」即可，文档已按这个口径写
-- D1 / R2 名称从 `drop-*` 改成 `xshare-*` 可以另开，要同步 wrangler 和 `db:init` 脚本
+- [x] 界面、包名、manifest、Worker 服务名、控制台 banner 统一为 xwshare
+- [x] 补 GPL-3.0 LICENSE
+- [x] 删除未实际使用的 Service Worker，manifest 只承担可安装元数据
+- [x] D1 / R2 默认名统一为 `xwshare-db` / `xwshare-files`
+- [x] 删除旧 axios 请求客户端、multipart helper 和无用依赖
 
 ---
 
@@ -114,4 +115,4 @@
 
 ## 建议的下一轮
 
-阶段 3 已落地。下一轮做阶段 4：界面、`package.json`、manifest、控制台 banner 统一叫 xshare，并补 LICENSE。
+阶段 4 已落地。下一轮进入阶段 5：先补 Worker 路由与取件码哈希单测，再补一条基于本地 D1 的最小寄取件集成测试。

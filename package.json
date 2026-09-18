@@ -1,5 +1,5 @@
 {
-  "name": "filecodeboxfronted",
+  "name": "xwshare",
   "version": "2.4.0",
   "private": true,
   "type": "module",
@@ -15,16 +15,13 @@
   },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.20",
-    "axios": "^1.18.0",
     "dompurify": "^3.4.11",
     "file-saver": "^2.0.5",
     "jszip": "3.10.1",
-    "lru-cache": "^11.5.1",
     "lucide-vue-next": "^0.535.0",
     "marked": "^16.4.2",
     "pinia": "^3.0.4",
     "qrcode.vue": "^3.10.0",
-    "spark-md5": "^3.0.2",
     "vue": "^3.5.38",
     "vue-i18n": "^9.14.5",
     "vue-router": "^4.6.4"
@@ -37,7 +34,6 @@
     "@tsconfig/node20": "^20.1.9",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^24.13.2",
-    "@types/spark-md5": "^3.0.5",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vitejs/plugin-vue-jsx": "^5.1.5",
     "@vue/eslint-config-prettier": "^10.2.0",

@@ -19,7 +19,7 @@ export class ConfigService {
       code: 200,
       detail: {
         config: {
-          name: config?.name || 'xshare',
+          name: config?.name || 'xwshare',
           uploadSize: config?.maxFileSize || FILE_SIZE_LIMITS.MAX_FILE_SIZE,
           expireStyle: config?.expireStyle || ['hour', 'day'],
           openUpload: config?.openUpload ?? 1

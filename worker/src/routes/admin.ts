@@ -14,7 +14,7 @@ const app = new Hono<{ Bindings: Env }>();
 app.get('/api/config', (c) => {
   return c.json({
     data: {
-      name: 'xshare',
+      name: 'xwshare',
       maxFileSize: 100 * 1024 * 1024,
       expireStyle: ['hour', 'day'],
       openUpload: 1,

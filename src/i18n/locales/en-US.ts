@@ -47,7 +47,7 @@ export default {
     hour: 'hour',
     day: 'day',
     times: 'times',
-    appName: 'FileCodeBox - File Transfer',
+    appName: 'xwshare - File Transfer',
     appDescription: 'Ready-to-use file transfer system'
   },
 
@@ -72,7 +72,7 @@ export default {
       refreshing: 'Refreshing',
       lastUpdated: 'Last updated: {time}',
       loadFailed: 'Failed to load dashboard data',
-      footerProduct: 'FileCodeBox Admin Console',
+      footerProduct: 'xwshare Admin',
       backendVersion: 'Server Version',
       frontendVersion: 'Frontend Version',
       versionPending: 'Pending sync',

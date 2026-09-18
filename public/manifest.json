@@ -1,6 +1,6 @@
 {
-  "name": "Drop - 文件快递柜",
-  "short_name": "Drop",
+  "name": "xwshare - 文件快递柜",
+  "short_name": "xwshare",
   "description": "极简、安全的文件与文本快递柜",
   "start_url": "/",
   "display": "standalone",

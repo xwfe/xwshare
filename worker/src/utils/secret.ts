@@ -46,7 +46,7 @@ const ADMIN_TTL_SECONDS = 24 * 60 * 60;
 export function getAdminPassword(env: Env): string | null {
   const password = (env.ADMIN_PASSWORD || '').trim();
   const isDev = env.ENVIRONMENT === 'development';
-  if (!password) return isDev ? 'xshare-dev' : null;
+  if (!password) return isDev ? 'xwshare-dev' : null;
   return password;
 }
 

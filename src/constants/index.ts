@@ -92,7 +92,7 @@ export const REGEX_PATTERNS = {
 
 // 默认配置
 export const DEFAULT_CONFIG = {
-  name: 'FileCodeBox',
+  name: 'xwshare',
   description: '文件传输工具',
   maxFileSize: FILE_SIZE_LIMITS.MAX_FILE_SIZE,
   allowedFileTypes: ['*'] as string[],

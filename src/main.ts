@@ -7,18 +7,12 @@ import App from './App.vue'
 import router from './router'
 import i18n from './i18n'
 
-const OPEN_SOURCE_BANNER = String.raw`
-  ______ _ _      _____          _      ____            
- |  ____(_) |    / ____|        | |    |  _ \           
- | |__   _| | ___| |     ___   __| | ___| |_) | _____  __
- |  __| | | |/ _ \ |    / _ \ / _\` |/ _ \  _ < / _ \ \/ /
- | |    | | |  __/ |___| (_) | (_| |  __/ |_) | (_) >  < 
- |_|    |_|_|\___|\_____\___/ \__,_|\___|____/ \___/_/\_\
-
- Open Source: https://github.com/vastsa/FileCodeBox
-`
-
-console.info(OPEN_SOURCE_BANNER)
+console.info(
+  '%c xwshare %c 文件快递柜 %c https://github.com/xwfe/xshare',
+  'background:#09090b;color:#fff;padding:2px 6px;border-radius:3px 0 0 3px',
+  'background:#3f3f46;color:#fff;padding:2px 6px',
+  'background:transparent;color:#71717a;padding:2px 6px;border-radius:0 3px 3px 0'
+)
 
 const app = createApp(App)
 
