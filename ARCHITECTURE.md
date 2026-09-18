@@ -139,10 +139,10 @@ Cron：`*/15 * * * *`，逻辑在 `worker/src/cron/cleanup.ts`。只处理 `expi
 Worker 使用 Node 自带 `node:test`，没有再引入测试框架依赖。当前两层：
 
 1. 单测：取件码字符集与归一化、生产 Secret fail-closed、HMAC、管理员 token、下载 token；
-2. 最小集成：真实 Wrangler + 独立本地 D1，验证文本 Parcel 创建后能用规范化后的取件码取回。
+2. 集成：真实 Wrangler + 独立本地 D1/R2，验证文本寄取件、文件上传/确认/下载、阅后即焚和管理后台主路径。
 
 `cd worker && pnpm test` 一次跑完。集成测试使用独立 `.test-state-*`，结束后清理，不复用开发库。
 
 Worker 关键事件通过 `worker/src/utils/log.ts` 输出单行 JSON，事件名固定，日志不带取件码、Secret、正文、上传 token 或原始 IP。已覆盖寄件成功、取件成功/拒绝、Turnstile 拒绝/配置错误、限速、未捕获错误、过期清理结果。
 
-仍未覆盖：文件上传完整链路、阅后即焚并发、后台管理接口的自动集成回归；限速仍是 isolate 内 `Map`，尚未换 Cloudflare Rate Limiting / Durable Object。
+本地回归已覆盖管理员删除文件时的 R2 联动；Turnstile 真实远端校验按设计不进入本地稳定套件。限速仍是 isolate 内 `Map`，尚未换 Cloudflare Rate Limiting / Durable Object。

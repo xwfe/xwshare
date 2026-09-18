@@ -74,7 +74,7 @@ cd worker
 pnpm test
 ```
 
-当前覆盖 7 个取件码 / 密钥单测，以及 1 条使用真实 Wrangler + 独立本地 D1 的“寄文本 → 取件”集成链路。测试数据写入临时 `.test-state-*` 后自动清理，不碰日常 `.wrangler/state`。
+当前覆盖 7 个取件码 / 密钥单测，以及使用真实 Wrangler + 独立本地 D1/R2 的集成套件：文本寄取件、文件上传/确认/下载、阅后即焚、管理员登录/统计/列表/删除。测试数据写入临时 `.test-state-*` 后自动清理，不碰日常 `.wrangler/state`。
 
 测试边界、日志事件和扩展规则见 [docs/testing.md](docs/testing.md)。
 
@@ -95,7 +95,7 @@ pnpm test
 
 - **没有**旧后台那些边角：视图预设、批量策略、系统设置页、分片秒传
 - **没有** Service Worker，不能离线用。`public/manifest.json` 只让浏览器显示“可安装”
-- 测试目前只覆盖 Worker 安全基础与最小文本寄取件；文件上传、阅后即焚、后台接口还没有完整集成回归
+- 自动回归已覆盖 Worker 安全基础、主要业务链路、并发阅后即焚、最大下载次数和 Cron 清理
 - 许可证为 **GPL-3.0**，见 [LICENSE](LICENSE)
 
 安全模型怎么工作、哪些地方还是空的，写在 [ARCHITECTURE.md](ARCHITECTURE.md)，不在这里重复。

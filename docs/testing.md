@@ -29,29 +29,26 @@ pnpm test
 - 下载 token 与 `fileKey` 绑定
 - 管理员 token 验证与篡改失败
 
-### 本地 D1 集成
+### 本地 D1 / R2 集成
 
 `tests/integration/parcel-flow.test.cjs` 使用仓库自己的 Wrangler：
 
 1. 为本次测试创建独立 `.test-state-<pid>`
 2. 对该目录初始化真实本地 D1 schema
 3. 启动 `wrangler dev`
-4. `POST /api/parcels` 寄一条文本
-5. 把返回取件码改成小写 + 连字符形式，再 `POST /api/pickup`
-6. 断言正文、标题、类型一致
-7. 结束 Worker 并删除临时 state
+4. 验证文本寄件与规范化取件码
+5. 验证文件登记、上传 token、R2 上传、确认、签名下载
+6. 验证阅后即焚首次成功、第二次拒绝
+7. 验证管理员未授权、登录、统计、列表、删除与 DELETED 查询
+8. 结束 Worker 并删除临时 state
 
 它不会读取或污染日常 `worker/.wrangler/state`。
 
 ## 3. 还没有覆盖
 
-- 文件登记 → 带 token 上传 → confirm → 下载
-- 阅后即焚的第二次取件 / 并发 claim
-- 最大下载次数
-- 管理员登录、列表、删除的完整集成链路
-- Cron 对 R2 文件与 D1 状态的组合清理
+- Turnstile 真实远端校验（本地 development 按设计跳过）
 
-这些应继续加在现有本地集成层，不再平行引入第二套测试框架。
+能在本地可靠验证的路径继续加在现有集成层，不再平行引入第二套测试框架。
 
 ## 4. 结构化日志
 
@@ -89,4 +86,4 @@ cd ..
 pnpm build
 ```
 
-阶段 5 当前验收基线：单测 **7/7**、本地 D1 集成 **1/1**、Worker typecheck 通过、根项目 build 通过。
+阶段 5 当前验收基线：单测 **7/7**、本地集成套件覆盖文本 / 文件 / 阅后即焚（含并发 claim）/ 最大下载次数 / 管理后台（含文件 R2 删除）/ Cron 清理、Worker typecheck 通过、根项目 build 通过。
