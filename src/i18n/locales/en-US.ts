@@ -359,6 +359,13 @@ export default {
       forever: 'Forever',
       count: 'By Count'
     },
+    options: {
+      burnAfterRead: 'Burn After Read',
+      maxDownloads: 'Download Limit',
+      unlimited: 'Unlimited',
+      encryption: 'End-to-End Encryption',
+      encryptionHint: 'Key stays in the link only, server cannot decrypt'
+    },
     messages: {
       selectFile: 'Please select a file to upload',
       enterText: 'Please enter text to send',

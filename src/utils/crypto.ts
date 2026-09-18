@@ -114,14 +114,6 @@ export async function decryptFile(
 }
 
 /**
- * 构建带加密密钥的分享链接
- * 密钥放在 URL fragment (#key=xxx) 中，浏览器不会将 fragment 发送给服务器
- */
-export function buildEncryptedShareUrl(baseUrl: string, pickupCode: string, encryptionKey: string): string {
-  return `${baseUrl}/${pickupCode}#key=${encryptionKey}`
-}
-
-/**
  * 从 URL fragment 中提取加密密钥
  */
 export function extractEncryptionKey(hash: string): string | null {

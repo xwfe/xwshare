@@ -385,6 +385,13 @@ export default {
       forever: '永久',
       count: '按次数'
     },
+    options: {
+      burnAfterRead: '阅后即焚',
+      maxDownloads: '下载次数限制',
+      unlimited: '不限',
+      encryption: '端到端加密',
+      encryptionHint: '密钥仅在链接中，服务器无法解密'
+    },
     messages: {
       selectFile: '请选择要上传的文件',
       enterText: '请输入要发送的文本',
