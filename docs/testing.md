@@ -52,7 +52,7 @@ pnpm test
 
 ## 4. 结构化日志
 
-`worker/src/utils/log.ts` 输出单行 JSON，固定包含：
+`worker/src/utils/log.ts` 输出结构化对象，逻辑字段固定包含：
 
 ```json
 {"timestamp":"...","level":"info|warn|error","event":"..."}
@@ -68,12 +68,14 @@ pnpm test
 | `parcel.pickup.rejected` | 取件被状态、过期、次数等规则拒绝 |
 | `turnstile.rejected` | Turnstile token 缺失或无效 |
 | `turnstile.misconfigured` | 生产缺 Turnstile Secret |
-| `request.rate_limited` | 当前内存限速拒绝请求 |
+| `request.rate_limited` | Cloudflare Rate Limiting binding 拒绝请求 |
 | `request.unhandled` | Hono 未捕获异常 |
 | `cleanup.expired.completed` | Cron 清理完成，含删除计数 |
 | `cleanup.expired.failed` | Cron 清理某 Parcel 失败 |
 
 日志禁止写入：明文取件码、`PICKUP_CODE_SECRET`、Turnstile Secret、管理员口令、上传 token、正文 / 文件内容、原始 IP。
+
+生产端通过 Workers Logs 持久化这些结构化对象；查询与运维规则见 [operations.md](operations.md)。
 
 ## 5. 提交前门禁
 

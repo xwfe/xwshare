@@ -13,7 +13,7 @@
 当前主要缺口：
 
 1. 自动回归已覆盖主要 Worker 业务与安全状态机；Turnstile 真实远端校验不放进本地稳定套件
-2. 生产日志已有结构，但还没接告警 / Logpush
+2. 仓库侧 Workers Logs 已接入；外部告警投递仍需在具体 Cloudflare / 监控账户配置
 
 ---
 
@@ -112,11 +112,12 @@
 - [x] 补文件上传、阅后即焚、管理后台关键路径集成回归
 - [x] 补并发阅后即焚、最大下载次数、Cron 清理回归
 - [x] 限速换 Cloudflare Rate Limiting binding，丢掉进程内 `Map`
-- [ ] 接 Cloudflare Logs / Logpush 告警策略；当前只产出结构化事件
+- [x] 开启 Cloudflare Workers Logs，结构化字段可直接查询，并补生产监控 runbook
+- [x] 明确外部告警 / OTLP / Logpush 为账户级部署动作，不把凭据或目标地址写入仓库
 - [x] Wrangler 升到 4.130.0、Workers Types 升到 5.20260908.1，并保持独立维护提交
 
 ---
 
 ## 建议的下一轮
 
-阶段 5 的本地自动回归、Wrangler 维护升级和限速后端替换均已完成。下一轮阶段 5 只剩生产日志 / 告警接入。
+阶段 5 的仓库侧工作已完成：自动回归、结构化日志、Workers Logs、Wrangler 维护升级、Rate Limiting 都已落地。下一轮进入生产部署复验；外部告警投递按实际 Cloudflare 账户和监控系统执行，不作为代码阶段阻塞项。

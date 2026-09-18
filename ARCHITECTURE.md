@@ -62,7 +62,7 @@ Worker 挂了就报错，**不会**再回退到旧 API。寄取件和管理后�
 ### 文本
 
 1. 可选：浏览器 `crypto.subtle` 生成 AES-256-GCM 密钥，加密正文
-2. `POST /api/parcels`（Turnstile + 内存限速）
+2. `POST /api/parcels`（Turnstile + Cloudflare Rate Limiting）
 3. Worker 生成 6 位取件码，哈希入库，把**明文取件码**返回给寄件人（只此一次）
 4. 分享链接：`https://example.com/#/?code=AB3K7M`，加密时再拼 `&key=...`
 
@@ -143,6 +143,10 @@ Worker 使用 Node 自带 `node:test`，没有再引入测试框架依赖。当�
 
 `cd worker && pnpm test` 一次跑完。集成测试使用独立 `.test-state-*`，结束后清理，不复用开发库。
 
-Worker 关键事件通过 `worker/src/utils/log.ts` 输出单行 JSON，事件名固定，日志不带取件码、Secret、正文、上传 token 或原始 IP。已覆盖寄件成功、取件成功/拒绝、Turnstile 拒绝/配置错误、限速、未捕获错误、过期清理结果。
+Worker 关键事件通过 `worker/src/utils/log.ts` 输出结构化对象，事件名固定，日志不带取件码、Secret、正文、上传 token 或原始 IP。已覆盖寄件成功、取件成功/拒绝、Turnstile 拒绝/配置错误、限速、未捕获错误、过期清理结果。
 
 本地回归已覆盖管理员删除文件时的 R2 联动和 Rate Limiting binding 的 10/分钟阈值；Turnstile 真实远端校验按设计不进入本地稳定套件。
+
+生产部署通过 `wrangler.toml` 开启 Workers Logs，保留 invocation logs，当前采样率为 100%。结构化日志直接输出对象，使 `event`、`reason`、`parcelId` 等字段可在 Workers Observability Query Builder 中直接过滤和聚合。这里只开启日志，不开启 traces。
+
+外部告警 / 日志投递属于 Cloudflare 账户和目标监控系统配置，不把 API Token、OTLP endpoint 或第三方凭据写进仓库。运维查询和接入边界见 [docs/operations.md](docs/operations.md)。

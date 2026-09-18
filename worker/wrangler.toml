@@ -24,6 +24,13 @@ namespace_id = "365411037"
 [triggers]
 crons = ["*/15 * * * *"]
 
+[observability]
+enabled = true
+
+  [observability.logs]
+  invocation_logs = true
+  head_sampling_rate = 1
+
 [vars]
 # PICKUP_CODE_SECRET = "change_me"
 # TURNSTILE_SECRET_KEY = "change_me"

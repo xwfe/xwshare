@@ -9,11 +9,10 @@ export function logEvent(level: LogLevel, event: string, fields: LogFields = {})
     level,
     event
   };
-  const line = JSON.stringify(entry);
 
-  if (level === 'error') console.error(line);
-  else if (level === 'warn') console.warn(line);
-  else console.info(line);
+  if (level === 'error') console.error(entry);
+  else if (level === 'warn') console.warn(entry);
+  else console.info(entry);
 }
 
 export function errorMessage(error: unknown): string {

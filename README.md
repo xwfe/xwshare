@@ -110,6 +110,7 @@ pnpm test
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 系统怎么工作、安全模型、已知缺口 |
 | [worker/README.md](worker/README.md) | Worker 目录、命令、环境变量、API |
 | [docs/testing.md](docs/testing.md) | 自动测试、结构化日志、验收边界 |
+| [docs/operations.md](docs/operations.md) | 生产日志、监控查询、告警接入边界 |
 | [docs/roadmap.md](docs/roadmap.md) | 后续计划 |
 
 `CHANGELOG.md` 留给 Release Please，现在还没打过正式版本。

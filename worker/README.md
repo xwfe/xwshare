@@ -120,7 +120,7 @@ D1 库名、R2 桶名是 `xwshare-db` / `xwshare-files`，与 wrangler 绑定和
 
 ## 结构化日志
 
-Worker 关键路径输出单行 JSON，便于 Cloudflare Logs / Logpush 后续直接检索。当前事件包括：
+Worker 关键路径输出结构化对象，便于 Workers Logs 直接提取字段并检索。当前事件包括：
 
 - `parcel.create.success`、`parcel.upload.registered`
 - `parcel.pickup.success`、`parcel.pickup.rejected`
@@ -129,3 +129,5 @@ Worker 关键路径输出单行 JSON，便于 Cloudflare Logs / Logpush 后续�
 - `cleanup.expired.completed`、`cleanup.expired.failed`
 
 日志不记录取件码、Secret、正文、上传 token 或原始 IP。字段和验收方式见 [docs/testing.md](../docs/testing.md)。
+
+`wrangler.toml` 已启用 Workers Logs，保留 invocation logs，日志采样率当前为 100%。结构化日志直接输出对象，因此 `event` / `reason` 等字段可在 Workers Observability 中直接过滤。生产查询和外部告警接入边界见 [docs/operations.md](../docs/operations.md)。

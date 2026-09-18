@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "wrangler dev --var ENVIRONMENT:development --var ADMIN_PASSWORD:xwshare-dev --port 8787",
-    "deploy": "wrangler deploy",
+    "deploy": "wrangler deploy --env=\"\"",
     "typecheck": "tsc --noEmit",
     "test": "node tests/run.cjs",
     "test:unit": "node --require ./tests/register-ts.cjs --test ./tests/unit/pickup-code.test.cjs ./tests/unit/secret.test.cjs",
