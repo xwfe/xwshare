@@ -1,6 +1,11 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { generatePickupCode, hashPickupCode } = require('../../src/utils/pickup-code.ts');
+const {
+  generatePickupCode,
+  hashPickupCode,
+  isValidPickupCode,
+  normalizePickupCode
+} = require('../../src/utils/pickup-code.ts');
 
 test('generatePickupCode 只生成 6 位无歧义字符', () => {
   for (let i = 0; i < 200; i++) {
@@ -17,4 +22,12 @@ test('hashPickupCode 对大小写、空格和连字符做统一归一化', async
   assert.equal(await hashPickupCode('AB3-K7M', secret), canonical);
   assert.equal(await hashPickupCode(' AB3 K7M ', secret), canonical);
   assert.match(canonical, /^[a-f0-9]{64}$/);
+});
+
+test('取件码校验与 hash 使用相同归一化规则', () => {
+  assert.equal(normalizePickupCode(' ab3-k7m '), 'AB3K7M');
+  assert.equal(isValidPickupCode('ab3-k7m'), true);
+  assert.equal(isValidPickupCode('ABC123'), false);
+  assert.equal(isValidPickupCode('ABCDE'), false);
+  assert.equal(isValidPickupCode(undefined), false);
 });

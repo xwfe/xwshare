@@ -14,6 +14,14 @@ const {
 test('生产环境拒绝缺失或占位 pickup secret', () => {
   assert.equal(getPickupSecret({ PICKUP_CODE_SECRET: '', TURNSTILE_SECRET_KEY: '' }), null);
   assert.equal(getPickupSecret({ PICKUP_CODE_SECRET: 'secret', TURNSTILE_SECRET_KEY: '' }), null);
+  assert.equal(getPickupSecret({ PICKUP_CODE_SECRET: 'too-short', TURNSTILE_SECRET_KEY: '' }), null);
+  assert.equal(
+    getPickupSecret({
+      PICKUP_CODE_SECRET: '0123456789abcdef0123456789abcdef',
+      TURNSTILE_SECRET_KEY: ''
+    }),
+    '0123456789abcdef0123456789abcdef'
+  );
 });
 
 test('development 环境允许本地密钥和管理员口令兜底', () => {
@@ -25,6 +33,18 @@ test('development 环境允许本地密钥和管理员口令兜底', () => {
 
   assert.equal(getPickupSecret(env), 'dev-local-only');
   assert.equal(getAdminPassword(env), 'xwshare-dev');
+});
+
+test('生产管理员口令拒绝过短和开发占位值', () => {
+  const base = {
+    PICKUP_CODE_SECRET: 'production-secret',
+    TURNSTILE_SECRET_KEY: 'turnstile-secret'
+  };
+
+  assert.equal(getAdminPassword({ ...base, ADMIN_PASSWORD: '12345' }), null);
+  assert.equal(getAdminPassword({ ...base, ADMIN_PASSWORD: 'change_me' }), null);
+  assert.equal(getAdminPassword({ ...base, ADMIN_PASSWORD: 'xwshare-dev' }), null);
+  assert.equal(getAdminPassword({ ...base, ADMIN_PASSWORD: 'strong-password' }), 'strong-password');
 });
 
 test('HMAC 稳定且密码比较不依赖明文比较', async () => {

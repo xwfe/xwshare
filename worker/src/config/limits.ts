@@ -1,0 +1,9 @@
+export const PARCEL_LIMITS = {
+  MAX_FILE_SIZE: 100 * 1024 * 1024,
+  MAX_TEXT_BYTES: 1024 * 1024,
+  MAX_TITLE_LENGTH: 200,
+  MAX_FILE_NAME_LENGTH: 255,
+  MAX_CONTENT_TYPE_LENGTH: 255
+} as const;
+
+export const EXPIRES_IN_VALUES = new Set(['1h', '1d', '7d']);

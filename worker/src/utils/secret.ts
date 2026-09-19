@@ -9,6 +9,7 @@ export function getPickupSecret(env: Env): string | null {
   if (!secret || PLACEHOLDER_SECRETS.has(secret)) {
     return isDev ? secret || 'dev-local-only' : null;
   }
+  if (!isDev && secret.length < 32) return null;
   return secret;
 }
 
@@ -47,6 +48,9 @@ export function getAdminPassword(env: Env): string | null {
   const password = (env.ADMIN_PASSWORD || '').trim();
   const isDev = env.ENVIRONMENT === 'development';
   if (!password) return isDev ? 'xwshare-dev' : null;
+  if (password.length < 6 || (!isDev && ['secret', 'change_me', 'xwshare-dev'].includes(password))) {
+    return null;
+  }
   return password;
 }
 

@@ -54,7 +54,7 @@ pnpm dev
 2. 复制 `.env.production.example` 为本地 `.env.production`，填写已部署 Worker 的 HTTPS 地址（`VITE_WORKER_API_URL`）和真实 Turnstile Site Key。真实生产文件已被 Git 忽略，不把部署环境值写回仓库。
 3. 在仓库根目录跑 `pnpm run preflight:production`，占位配置没清干净时直接失败。
 4. 对**远程**库执行 `cd worker && pnpm run db:init`。只跑了 `db:init:local` 的话，生产寄件会报表不存在。
-5. 设置三个 Secret：`PICKUP_CODE_SECRET`（自己生成一段长随机串，用来哈希取件码）、`TURNSTILE_SECRET_KEY`、`ADMIN_PASSWORD`（后台登录口令，至少 6 位）。生产没配 Turnstile Secret，所有寄件接口直接 **500**，不是静默放行。没配管理员口令，后台登录 **500**。
+5. 设置三个 Secret：`PICKUP_CODE_SECRET`（至少 32 字符的随机串，用来做 HMAC / token 根密钥）、`TURNSTILE_SECRET_KEY`、`ADMIN_PASSWORD`（后台登录口令，至少 6 位）。生产 Secret 缺失或不合规会 fail-closed，不会静默使用开发默认值。
 6. 非交互部署环境提供 `CLOUDFLARE_API_TOKEN` 后，运行 `cd worker && pnpm run preflight:cloudflare`，只核对 Secret 名称和 production dry-run。
 7. `cd worker && pnpm run deploy`。
 8. 回到根目录部署 Pages：
@@ -90,7 +90,7 @@ pnpm test
 
 有：
 
-- 文本 / 文件寄件，6 位取件码，过期时间只有 **1 小时 / 1 天 / 7 天** 三档
+- 文本 / 文件寄件，6 位取件码，过期时间只有 **1 小时 / 1 天 / 7 天** 三档。Worker 服务端强制文件最大 **100 MiB**、文本最大 **1 MiB**，不只依赖前端校验
 - 可选端到端加密（AES-256-GCM）。密钥在分享链接的 Hash 里：`/#/?code=AB3K7M&key=...`，浏览器不会把 `#` 后面的内容发给服务器
 - 阅后即焚、最大取件次数
 - 中 / 英界面、深浅色主题

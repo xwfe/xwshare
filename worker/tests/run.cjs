@@ -16,6 +16,7 @@ run([
   '--require',
   './tests/register-ts.cjs',
   '--test',
+  './tests/unit/parcel-input.test.cjs',
   './tests/unit/pickup-code.test.cjs',
   './tests/unit/secret.test.cjs'
 ]);

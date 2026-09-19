@@ -133,6 +133,7 @@
 - [x] 删除未使用的 Wrangler named development environment，本地/生产配置边界唯一化
 - [x] 生产环境变量改为本地忽略文件 + tracked example，Pages deploy 强制先过 production preflight
 - [x] 固化仓库级 `ci:verify`：前端 build + Worker typecheck + Worker test，pin pnpm 11.20.0
+- [x] 上线前输入边界加固：Worker 强制文件/文本大小、有效期/类型校验，上传 token 原子单次 claim，上传实际尺寸一致
 - [ ] 更新受保护 GitHub workflow：Node 22 / pnpm 11，并改为执行完整 `ci:verify`（当前工具无 workflow 写权限）
 - [ ] GitHub `xwfe/xwshare` remote 可访问并推送当前本地提交
 - [ ] 填入真实 D1 `database_id`

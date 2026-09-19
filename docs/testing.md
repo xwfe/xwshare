@@ -15,15 +15,24 @@ pnpm test
 
 ### 单测
 
+`tests/unit/parcel-input.test.cjs`：
+
+- 文本 1 MiB / 文件 100 MiB 服务端边界
+- 固定有效期三档
+- 最大下载次数非负安全整数
+
 `tests/unit/pickup-code.test.cjs`：
 
 - 6 位取件码只使用无歧义字符
 - 取件码哈希对大小写、空格、连字符统一归一化
+- 取件码格式校验与 hash 共用同一归一化规则
 
 `tests/unit/secret.test.cjs`：
 
 - 生产缺失 / 占位 `PICKUP_CODE_SECRET` 时 fail-closed
+- 生产 `PICKUP_CODE_SECRET` 少于 32 字符时 fail-closed
 - development 本地兜底
+- 生产管理员口令拒绝过短值和开发占位值
 - HMAC 稳定性
 - 管理员密码比较
 - 下载 token 与 `fileKey` 绑定
@@ -38,10 +47,12 @@ pnpm test
 3. 启动 `wrangler dev`
 4. 验证文本寄件与规范化取件码
 5. 验证文件登记、上传 token、R2 上传、确认、签名下载
-6. 验证阅后即焚首次成功、第二次拒绝
-7. 验证管理员未授权、登录、统计、列表、删除与 DELETED 查询
-8. 验证跨域管理删除的 CORS 预检允许 `DELETE` + `Authorization`
-9. 结束 Worker 并删除临时 state
+6. 验证 100 MiB 服务端上限、登记/实际上传尺寸一致、上传 token 单次使用与并发 claim
+7. 验证无效有效期 / 取件码被 Worker 自身拒绝
+8. 验证阅后即焚首次成功、第二次拒绝
+9. 验证管理员未授权、登录、统计、列表、删除与 DELETED 查询
+10. 验证跨域管理删除的 CORS 预检允许 `DELETE` + `Authorization`
+11. 结束 Worker 并删除临时 state
 
 它不会读取或污染日常 `worker/.wrangler/state`。
 
@@ -89,4 +100,4 @@ cd ..
 pnpm build
 ```
 
-阶段 5 当前验收基线：单测 **7/7**、本地集成套件覆盖文本 / 文件 / 阅后即焚（含并发 claim）/ 最大下载次数 / 管理后台（含文件 R2 删除）/ Cron 清理 / 寄取件与管理员登录两个 Rate Limiting 阈值、Worker typecheck 通过、根项目 build 通过。
+当前验收基线：单测覆盖输入边界、取件码、HMAC / token / Secret；本地集成套件覆盖文本 / 文件 / 服务端输入边界 / 一次性上传 token（含并发 claim）/ 阅后即焚（含并发 claim）/ 最大下载次数 / 管理后台（含文件 R2 删除）/ Cron 清理 / 两个 Rate Limiting 阈值；Worker typecheck 和根项目 build 通过。

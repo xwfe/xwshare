@@ -38,7 +38,7 @@ Worker 挂了就报错，**不会**再回退到旧 API。寄取件和管理后�
 | `encrypted` | 客户端是否已加密，服务端不当密钥用 |
 | `status` | `PENDING`（文件未传完）→ `AVAILABLE` → 阅后即焚时 `CLAIMED` → 过期清理 `DELETED` |
 | `ip_hash` | 创建者 IP 的 HMAC，库里看不到原始 IP |
-| `upload_token_hash` | 文件上传一次性凭证的 HMAC，确认后清空 |
+| `upload_token_hash` | 文件上传一次性凭证的 HMAC；PUT 原子 claim，上传成功后立即清空 |
 | `storage_provider` | 默认 `r2`，没有第二套实现 |
 
 ---
@@ -68,8 +68,8 @@ Worker 挂了就报错，**不会**再回退到旧 API。寄取件和管理后�
 
 ### 文件
 
-1. `POST /api/parcels/upload` 拿到 `uploadUrl`、`uploadToken`，记录为 `PENDING`
-2. 浏览器 `PUT`，请求头带 `x-upload-token`。没有凭证或状态不是 `PENDING` 会 401/403
+1. `POST /api/parcels/upload` 拿到 `uploadUrl`、`uploadToken`，记录为 `PENDING`。Worker 在这里强制文件不超过 100 MiB
+2. 浏览器 `PUT`，请求头带 `x-upload-token`。Worker 先用 D1 条件更新原子 claim token，再写 R2；并发复用只能一个成功。上传实际字节数必须和登记值一致，成功后 token 立即清空
 3. `POST /api/parcels/confirm-upload`：R2 里有对象才把状态改成 `AVAILABLE`，空转返回 409
 
 文件**经过 Worker**，不是客户端直传 R2。请求体上限 100MB。
@@ -89,8 +89,9 @@ Worker 挂了就报错，**不会**再回退到旧 API。寄取件和管理后�
 
 已落地：
 
-- 取件码、上传凭证、创建者 IP 都只存 HMAC。生产缺 `PICKUP_CODE_SECRET` 会 500，不会再用 `'secret'`
+- 取件码、上传凭证、创建者 IP 都只存 HMAC。生产 `PICKUP_CODE_SECRET` 必须至少 32 字符；缺失、占位或过短都会 fail-closed
 - 文件 `PENDING` 不能取；上传 / 下载都要一次性凭证
+- Worker 服务端强制输入边界：文件 100 MiB、文本 1 MiB、固定有效期、非负整数下载次数；不依赖前端约束
 - E2E 密钥只在 URL Hash 里，服务端只存密文
 - 寄件接口：Turnstile 生产 fail-closed；开发环境 `ENVIRONMENT=development` 可跳过
 - 阅后即焚的 Claim 是原子更新
@@ -146,7 +147,7 @@ Worker 使用 Node 自带 `node:test`，没有再引入测试框架依赖。当�
 
 Worker 关键事件通过 `worker/src/utils/log.ts` 输出结构化对象，事件名固定，日志不带取件码、Secret、正文、上传 token 或原始 IP。已覆盖寄件成功、取件成功/拒绝、Turnstile 拒绝/配置错误、限速、未捕获错误、过期清理结果。
 
-本地回归已覆盖管理员删除文件时的 R2 联动和 Rate Limiting binding 的 10/分钟阈值；Turnstile 真实远端校验按设计不进入本地稳定套件。
+本地回归已覆盖管理员删除文件时的 R2 联动、两个 Rate Limiting 阈值、服务端输入边界、上传尺寸一致性和上传 token 并发单次 claim；Turnstile 真实远端校验按设计不进入本地稳定套件。
 
 生产部署通过 `wrangler.toml` 开启 Workers Logs，保留 invocation logs，当前采样率为 100%。结构化日志直接输出对象，使 `event`、`reason`、`parcelId` 等字段可在 Workers Observability Query Builder 中直接过滤和聚合。这里只开启日志，不开启 traces。
 

@@ -1,8 +1,8 @@
-import { Hono } from 'hono';
+import { Context, Hono } from 'hono';
 import { Env } from '../types/env';
 import { turnstileMiddleware } from '../middleware/turnstile';
 import { rateLimitMiddleware } from '../middleware/rate-limit';
-import { generatePickupCode, hashPickupCode } from '../utils/pickup-code';
+import { generatePickupCode, hashPickupCode, isValidPickupCode } from '../utils/pickup-code';
 import {
   generateOpaqueToken,
   getPickupSecret,
@@ -12,6 +12,15 @@ import {
 } from '../utils/secret';
 import { R2Storage } from '../storage/r2';
 import { logEvent } from '../utils/log';
+import {
+  normalizeMaxDownloads,
+  validateExpiresIn,
+  validateFileMetadata,
+  validateOptionalBoolean,
+  validateTextContent,
+  validateTitle,
+  type ParcelValidationError
+} from '../utils/parcel-input';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -32,16 +41,44 @@ function missingSecret() {
   return { error: 'Pickup secret not configured', code: 'SERVER_MISCONFIGURED' } as const;
 }
 
+function validationResponse(
+  c: Context<{ Bindings: Env }>,
+  validation: ParcelValidationError
+) {
+  return c.json({ error: validation.error, code: validation.code }, validation.status);
+}
+
+function firstValidationError(
+  validations: Array<ParcelValidationError | null>
+): ParcelValidationError | null {
+  return validations.find((validation): validation is ParcelValidationError => validation !== null) || null;
+}
+
 app.post('/api/parcels', rateLimitMiddleware, turnstileMiddleware, async (c) => {
   const secret = getPickupSecret(c.env);
   if (!secret) return c.json(missingSecret(), 500);
 
-  const body = await c.req.json();
+  const body = await c.req.json().catch(() => null);
+  if (!body || typeof body !== 'object') {
+    return c.json({ error: 'Invalid JSON body', code: 'INVALID_BODY' }, 400);
+  }
   const { type, content, title, expiresIn, burnAfterRead, maxDownloads, encrypted } = body;
 
   if (type !== 'text' && type !== 'markdown') {
     logEvent('warn', 'parcel.create.rejected', { reason: 'invalid_type' });
     return c.json({ error: 'Invalid type', code: 'INVALID_TYPE' }, 400);
+  }
+  const validation = firstValidationError([
+    validateTextContent(content),
+    validateTitle(title),
+    validateExpiresIn(expiresIn),
+    validateOptionalBoolean(burnAfterRead, 'burnAfterRead'),
+    validateOptionalBoolean(encrypted, 'encrypted')
+  ]);
+  if (validation) return validationResponse(c, validation);
+  const normalizedMaxDownloads = normalizeMaxDownloads(maxDownloads);
+  if (typeof normalizedMaxDownloads !== 'number') {
+    return validationResponse(c, normalizedMaxDownloads);
   }
 
   const code = generatePickupCode();
@@ -62,7 +99,7 @@ app.post('/api/parcels', rateLimitMiddleware, turnstileMiddleware, async (c) => 
       title || '',
       content || '',
       expiresAt,
-      maxDownloads || 0,
+      normalizedMaxDownloads,
       burnAfterRead ? 1 : 0,
       encrypted ? 1 : 0,
       ipHash
@@ -82,8 +119,22 @@ app.post('/api/parcels/upload', rateLimitMiddleware, turnstileMiddleware, async 
   const secret = getPickupSecret(c.env);
   if (!secret) return c.json(missingSecret(), 500);
 
-  const body = await c.req.json();
+  const body = await c.req.json().catch(() => null);
+  if (!body || typeof body !== 'object') {
+    return c.json({ error: 'Invalid JSON body', code: 'INVALID_BODY' }, 400);
+  }
   const { fileName, fileSize, contentType, expiresIn, burnAfterRead, maxDownloads, encrypted } = body;
+  const validation = firstValidationError([
+    validateFileMetadata(fileName, fileSize, contentType),
+    validateExpiresIn(expiresIn),
+    validateOptionalBoolean(burnAfterRead, 'burnAfterRead'),
+    validateOptionalBoolean(encrypted, 'encrypted')
+  ]);
+  if (validation) return validationResponse(c, validation);
+  const normalizedMaxDownloads = normalizeMaxDownloads(maxDownloads);
+  if (typeof normalizedMaxDownloads !== 'number') {
+    return validationResponse(c, normalizedMaxDownloads);
+  }
 
   const code = generatePickupCode();
   const hash = await hashPickupCode(code, secret);
@@ -107,7 +158,7 @@ app.post('/api/parcels/upload', rateLimitMiddleware, turnstileMiddleware, async 
       fileSize,
       contentType,
       expiresAt,
-      maxDownloads || 0,
+      normalizedMaxDownloads,
       burnAfterRead ? 1 : 0,
       encrypted ? 1 : 0,
       ipHash,
@@ -145,8 +196,12 @@ app.put('/api/upload/:fileKey{.*}', async (c) => {
     return c.json({ error: 'Missing upload token', code: 'MISSING_UPLOAD_TOKEN' }, 401);
   }
 
-  const parcel: { status: string; upload_token_hash: string | null } | null = await c.env.DB.prepare(
-    `SELECT status, upload_token_hash FROM parcels WHERE file_key = ?`
+  const parcel: {
+    status: string;
+    upload_token_hash: string | null;
+    file_size: number;
+  } | null = await c.env.DB.prepare(
+    `SELECT status, upload_token_hash, file_size FROM parcels WHERE file_key = ?`
   )
     .bind(fileKey)
     .first();
@@ -160,10 +215,53 @@ app.put('/api/upload/:fileKey{.*}', async (c) => {
     return c.json({ error: 'Invalid upload token', code: 'INVALID_UPLOAD_TOKEN' }, 403);
   }
 
-  if (c.req.raw.body) {
-    await c.env.BUCKET.put(fileKey, c.req.raw.body, {
+  if (!c.req.raw.body) {
+    return c.json({ error: 'Missing upload body', code: 'INVALID_UPLOAD_BODY' }, 400);
+  }
+
+  const contentLengthRaw = c.req.header('Content-Length');
+  if (contentLengthRaw) {
+    const contentLength = Number(contentLengthRaw);
+    if (!Number.isSafeInteger(contentLength) || contentLength !== parcel.file_size) {
+      return c.json({ error: 'Upload size mismatch', code: 'UPLOAD_SIZE_MISMATCH' }, 400);
+    }
+  }
+
+  const claimHash = await hmacHex(`claim:${generateOpaqueToken()}`, secret);
+  const claim = await c.env.DB.prepare(
+    `UPDATE parcels SET upload_token_hash = ? WHERE file_key = ? AND status = 'PENDING' AND upload_token_hash = ?`
+  )
+    .bind(claimHash, fileKey, tokenHash)
+    .run();
+  if (!claim.success || claim.meta.changes === 0) {
+    return c.json({ error: 'Upload token already used', code: 'UPLOAD_TOKEN_USED' }, 409);
+  }
+
+  try {
+    const uploaded = await c.env.BUCKET.put(fileKey, c.req.raw.body, {
       httpMetadata: { contentType: c.req.header('Content-Type') || 'application/octet-stream' }
     });
+    if (!uploaded || uploaded.size !== parcel.file_size) {
+      await c.env.BUCKET.delete(fileKey);
+      await c.env.DB.prepare(
+        `UPDATE parcels SET upload_token_hash = ? WHERE file_key = ? AND status = 'PENDING' AND upload_token_hash = ?`
+      )
+        .bind(tokenHash, fileKey, claimHash)
+        .run();
+      return c.json({ error: 'Upload size mismatch', code: 'UPLOAD_SIZE_MISMATCH' }, 400);
+    }
+    await c.env.DB.prepare(
+      `UPDATE parcels SET upload_token_hash = NULL WHERE file_key = ? AND status = 'PENDING' AND upload_token_hash = ?`
+    )
+      .bind(fileKey, claimHash)
+      .run();
+  } catch (error) {
+    await c.env.DB.prepare(
+      `UPDATE parcels SET upload_token_hash = ? WHERE file_key = ? AND status = 'PENDING' AND upload_token_hash = ?`
+    )
+      .bind(tokenHash, fileKey, claimHash)
+      .run();
+    throw error;
   }
 
   return c.json({ data: { success: true } });
@@ -173,7 +271,11 @@ app.post('/api/parcels/confirm-upload', async (c) => {
   const secret = getPickupSecret(c.env);
   if (!secret) return c.json(missingSecret(), 500);
 
-  const { code } = await c.req.json();
+  const body = await c.req.json().catch(() => null);
+  const code = body && typeof body === 'object' ? (body as any).code : undefined;
+  if (!isValidPickupCode(code)) {
+    return c.json({ error: 'Invalid pickup code', code: 'INVALID_CODE' }, 400);
+  }
   const hash = await hashPickupCode(code, secret);
   const parcel: { id: string; file_key: string | null; status: string } | null = await c.env.DB.prepare(
     `SELECT id, file_key, status FROM parcels WHERE pickup_code_hash = ?`
@@ -207,7 +309,11 @@ app.post('/api/pickup', rateLimitMiddleware, async (c) => {
   const secret = getPickupSecret(c.env);
   if (!secret) return c.json(missingSecret(), 500);
 
-  const { code } = await c.req.json();
+  const body = await c.req.json().catch(() => null);
+  const code = body && typeof body === 'object' ? (body as any).code : undefined;
+  if (!isValidPickupCode(code)) {
+    return c.json({ error: 'Invalid pickup code', code: 'INVALID_CODE' }, 400);
+  }
   const hash = await hashPickupCode(code, secret);
 
   const parcel: any = await c.env.DB.prepare(`SELECT * FROM parcels WHERE pickup_code_hash = ?`)

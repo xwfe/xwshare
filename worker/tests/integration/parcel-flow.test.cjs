@@ -184,6 +184,17 @@ test('本地 Worker + D1 + R2 关键链路', { timeout: 45000 }, async (t) => {
     });
     assert.equal(uploadResponse.status, 200);
 
+    const reusedUploadToken = await jsonRequest(registered.data.uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'content-type': 'text/plain',
+        'x-upload-token': registered.data.uploadToken
+      },
+      body: fileBody
+    });
+    assert.equal(reusedUploadToken.response.status, 403);
+    assert.equal(reusedUploadToken.body.code, 'UPLOAD_FORBIDDEN');
+
     const directDownload = await fetch(
       `${baseUrl}/api/download-file/${encodeURIComponent(registered.data.fileKey)}`
     );
@@ -210,6 +221,127 @@ test('本地 Worker + D1 + R2 关键链路', { timeout: 45000 }, async (t) => {
     const downloadResponse = await fetch(pickup.body.data.downloadUrl);
     assert.equal(downloadResponse.status, 200);
     assert.equal(await downloadResponse.text(), fileBody);
+  });
+
+  await t.test('Worker 自身拒绝超 100 MiB 文件登记', async () => {
+    const result = await jsonRequest(`${baseUrl}/api/parcels/upload`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'CF-Connecting-IP': '198.51.100.27'
+      },
+      body: JSON.stringify({
+        fileName: 'too-large.bin',
+        fileSize: 100 * 1024 * 1024 + 1,
+        contentType: 'application/octet-stream',
+        expiresIn: '1h',
+        burnAfterRead: false,
+        maxDownloads: 0,
+        encrypted: false
+      })
+    });
+
+    assert.equal(result.response.status, 413);
+    assert.equal(result.body.code, 'FILE_TOO_LARGE');
+  });
+
+  await t.test('Worker 拒绝上传正文尺寸与登记尺寸不一致', async () => {
+    const fileBody = 'size mismatch';
+    const registered = await jsonRequest(`${baseUrl}/api/parcels/upload`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'CF-Connecting-IP': '198.51.100.28'
+      },
+      body: JSON.stringify({
+        fileName: 'mismatch.txt',
+        fileSize: Buffer.byteLength(fileBody) + 1,
+        contentType: 'text/plain',
+        expiresIn: '1h',
+        burnAfterRead: false,
+        maxDownloads: 0,
+        encrypted: false
+      })
+    });
+    assert.equal(registered.response.status, 200);
+
+    const upload = await jsonRequest(registered.body.data.uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'content-type': 'text/plain',
+        'x-upload-token': registered.body.data.uploadToken
+      },
+      body: fileBody
+    });
+    assert.equal(upload.response.status, 400);
+    assert.equal(upload.body.code, 'UPLOAD_SIZE_MISMATCH');
+  });
+
+  await t.test('同一个上传 token 并发 PUT 只有一个请求能成功 claim', async () => {
+    const fileBody = 'one upload token one writer';
+    const registered = await jsonRequest(`${baseUrl}/api/parcels/upload`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'CF-Connecting-IP': '198.51.100.31'
+      },
+      body: JSON.stringify({
+        fileName: 'concurrent-upload.txt',
+        fileSize: Buffer.byteLength(fileBody),
+        contentType: 'text/plain',
+        expiresIn: '1h',
+        burnAfterRead: false,
+        maxDownloads: 0,
+        encrypted: false
+      })
+    });
+    assert.equal(registered.response.status, 200);
+
+    const upload = () =>
+      fetch(registered.body.data.uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'content-type': 'text/plain',
+          'x-upload-token': registered.body.data.uploadToken
+        },
+        body: fileBody
+      });
+
+    const uploads = await Promise.all([upload(), upload()]);
+    const statuses = uploads.map((response) => response.status).sort();
+    assert.equal(statuses.filter((status) => status === 200).length, 1);
+    assert.equal(
+      statuses.filter((status) => status === 403 || status === 409).length,
+      1
+    );
+
+    const confirm = await jsonRequest(`${baseUrl}/api/parcels/confirm-upload`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ code: registered.body.data.code })
+    });
+    assert.equal(confirm.response.status, 200);
+  });
+
+  await t.test('Worker 拒绝无效有效期和取件码', async () => {
+    const invalidExpiry = await createTextParcel(
+      baseUrl,
+      { expiresIn: 'forever' },
+      '198.51.100.29'
+    );
+    assert.equal(invalidExpiry.response.status, 400);
+    assert.equal(invalidExpiry.body.code, 'INVALID_EXPIRY');
+
+    const invalidCode = await jsonRequest(`${baseUrl}/api/pickup`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'CF-Connecting-IP': '198.51.100.30'
+      },
+      body: JSON.stringify({ code: 'ABC123' })
+    });
+    assert.equal(invalidCode.response.status, 400);
+    assert.equal(invalidCode.body.code, 'INVALID_CODE');
   });
 
   await t.test('阅后即焚首次成功，第二次取件被拒绝', async () => {

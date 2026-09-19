@@ -9,6 +9,7 @@ import {
   verifyAdminToken,
   verifyPassword
 } from '../utils/secret';
+import { PARCEL_LIMITS } from '../config/limits';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -16,7 +17,7 @@ app.get('/api/config', (c) => {
   return c.json({
     data: {
       name: 'xwshare',
-      maxFileSize: 100 * 1024 * 1024,
+      maxFileSize: PARCEL_LIMITS.MAX_FILE_SIZE,
       expireStyle: ['hour', 'day'],
       openUpload: 1,
       turnstileEnabled: c.env.ENVIRONMENT !== 'development'
