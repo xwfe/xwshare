@@ -12,12 +12,13 @@
   "scripts": {
     "dev": "vite",
     "build": "run-s check:architecture type-check build-only",
+    "build:production": "pnpm run preflight:production && pnpm build",
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "check:architecture": "node scripts/check-architecture.mjs",
     "preflight:production": "node scripts/preflight-production.mjs",
-    "deploy:pages": "pnpm --dir worker exec wrangler pages deploy ../dist --project-name xwshare",
+    "deploy:pages": "pnpm run build:production && pnpm --dir worker exec wrangler pages deploy ../dist --project-name xwshare",
     "lint": "eslint . --fix",
     "format": "prettier --write src/"
   },

@@ -51,21 +51,19 @@ pnpm dev
 详细命令在 [worker/README.md](worker/README.md)，这里只写顺序和容易踩的坑。
 
 1. 在 Cloudflare 建 D1（库名 `xwshare-db`）和 R2（桶名 `xwshare-files`），把 `database_id` 填进 `worker/wrangler.toml`。
-2. 改 `.env.production`：填写已部署 Worker 的 HTTPS 地址（`VITE_WORKER_API_URL`）和真实 Turnstile Site Key。当前默认是 Pages + Worker 独立部署，生产环境不能像开发环境那样依赖 Vite 的 `/api` 代理。
+2. 复制 `.env.production.example` 为本地 `.env.production`，填写已部署 Worker 的 HTTPS 地址（`VITE_WORKER_API_URL`）和真实 Turnstile Site Key。真实生产文件已被 Git 忽略，不把部署环境值写回仓库。
 3. 在仓库根目录跑 `pnpm run preflight:production`，占位配置没清干净时直接失败。
 4. 对**远程**库执行 `cd worker && pnpm run db:init`。只跑了 `db:init:local` 的话，生产寄件会报表不存在。
 5. 设置三个 Secret：`PICKUP_CODE_SECRET`（自己生成一段长随机串，用来哈希取件码）、`TURNSTILE_SECRET_KEY`、`ADMIN_PASSWORD`（后台登录口令，至少 6 位）。生产没配 Turnstile Secret，所有寄件接口直接 **500**，不是静默放行。没配管理员口令，后台登录 **500**。
 6. 非交互部署环境提供 `CLOUDFLARE_API_TOKEN` 后，运行 `cd worker && pnpm run preflight:cloudflare`，只核对 Secret 名称和 production dry-run。
 7. `cd worker && pnpm run deploy`。
-8. 回到根目录构建并部署 Pages：
+8. 回到根目录部署 Pages：
 
 ```bash
-pnpm build
 pnpm run deploy:pages
 ```
 
-`pnpm build` 会先跑架构分层检查（`scripts/check-architecture.mjs`）和 `vue-tsc`。检查失败时构建直接停，不会出 `dist/`。
-`deploy:pages` 使用 `worker` 目录已经锁定的 Wrangler 版本，不再通过 `npx` 临时下载另一个版本。
+`deploy:pages` 会先跑 production preflight 和完整 `pnpm build`，然后使用 `worker` 目录已经锁定的 Wrangler 版本部署，不再通过 `npx` 临时下载另一个版本。
 
 如果以后给自定义域配置了明确的 Worker `/api/*` route，可以再把 `VITE_WORKER_API_URL` 改回空值走同域；当前仓库没有这层生产 route，因此 preflight 会拒绝空值。
 

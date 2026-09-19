@@ -10,6 +10,11 @@ function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), 'utf8');
 }
 
+function readOptional(relativePath) {
+  const target = path.join(root, relativePath);
+  return fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : null;
+}
+
 function parseEnv(content) {
   const result = {};
   for (const rawLine of content.split(/\r?\n/)) {
@@ -59,31 +64,44 @@ if (!/\[observability\][\s\S]*?enabled\s*=\s*true/m.test(wrangler)) {
   problems.push('worker/wrangler.toml 未启用 Workers Logs observability');
 }
 
-const productionEnv = parseEnv(read('.env.production'));
-const turnstileSiteKey = productionEnv.VITE_TURNSTILE_SITE_KEY || '';
-if (!turnstileSiteKey) {
-  problems.push('.env.production 缺少 VITE_TURNSTILE_SITE_KEY');
-}
-if (turnstileSiteKey === '1x00000000000000000000AA') {
-  problems.push('.env.production 不能使用本地 Turnstile 测试 Site Key');
-}
-
-const workerUrl = productionEnv.VITE_WORKER_API_URL || '';
-if (!workerUrl) {
-  problems.push(
-    '.env.production 缺少 VITE_WORKER_API_URL；当前 Pages + Worker 独立部署必须显式填写 Worker HTTPS 地址'
-  );
+const productionEnvRaw = readOptional('.env.production');
+let productionEnv = {};
+if (productionEnvRaw === null) {
+  problems.push('缺少 .env.production；先复制 .env.production.example 再填写真实生产值');
 } else {
-  try {
-    const url = new URL(workerUrl);
-    if (url.protocol !== 'https:') {
-      problems.push('生产 VITE_WORKER_API_URL 必须使用 https://');
+  productionEnv = parseEnv(productionEnvRaw);
+
+  const turnstileSiteKey = productionEnv.VITE_TURNSTILE_SITE_KEY || '';
+  if (!turnstileSiteKey) {
+    problems.push('.env.production 缺少 VITE_TURNSTILE_SITE_KEY');
+  }
+  if (
+    turnstileSiteKey === '1x00000000000000000000AA' ||
+    turnstileSiteKey === 'your-turnstile-site-key'
+  ) {
+    problems.push('.env.production 不能使用本地 Turnstile 测试 Site Key');
+  }
+
+  const workerUrl = productionEnv.VITE_WORKER_API_URL || '';
+  if (!workerUrl) {
+    problems.push(
+      '.env.production 缺少 VITE_WORKER_API_URL；当前 Pages + Worker 独立部署必须显式填写 Worker HTTPS 地址'
+    );
+  } else {
+    try {
+      const url = new URL(workerUrl);
+      if (url.protocol !== 'https:') {
+        problems.push('生产 VITE_WORKER_API_URL 必须使用 https://');
+      }
+      if (['localhost', '127.0.0.1', '::1'].includes(url.hostname)) {
+        problems.push('生产 VITE_WORKER_API_URL 不能指向本机地址');
+      }
+      if (url.hostname.includes('your-subdomain')) {
+        problems.push('.env.production 的 VITE_WORKER_API_URL 仍是示例占位地址');
+      }
+    } catch {
+      problems.push('生产 VITE_WORKER_API_URL 不是合法 URL');
     }
-    if (['localhost', '127.0.0.1', '::1'].includes(url.hostname)) {
-      problems.push('生产 VITE_WORKER_API_URL 不能指向本机地址');
-    }
-  } catch {
-    problems.push('生产 VITE_WORKER_API_URL 不是合法 URL');
   }
 }
 

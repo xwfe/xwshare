@@ -131,6 +131,7 @@
 - [x] 修正 Pages → Worker 跨域生产路径：CORS 允许管理 `DELETE`，Pages 部署复用锁定 Wrangler
 - [x] 管理员登录增加独立 5 次/分钟/IP 的 Cloudflare Rate Limiting，避免公网暴力尝试
 - [x] 删除未使用的 Wrangler named development environment，本地/生产配置边界唯一化
+- [x] 生产环境变量改为本地忽略文件 + tracked example，Pages deploy 强制先过 production preflight
 - [ ] GitHub `xwfe/xwshare` remote 可访问并推送当前本地提交
 - [ ] 填入真实 D1 `database_id`
 - [ ] 填入生产 `VITE_WORKER_API_URL`（当前 Pages + Worker 独立部署必须显式指向 Worker HTTPS 地址）

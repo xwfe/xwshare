@@ -38,9 +38,11 @@ pnpm run deploy:pages
 
 `preflight:production` 只做本地静态检查：Node 版本、Git origin、D1 `database_id`、生产 Worker HTTPS 地址、Turnstile Site Key、Rate Limiting / Observability 配置。
 
-当前生产拓扑是 **Pages + Worker 独立部署**。因此 `.env.production` 的 `VITE_WORKER_API_URL` 必须填写 Worker HTTPS 地址；空值只适用于已经额外配置了自定义域 `/api/*` Worker route 的部署，而仓库默认没有这层 route。
+当前生产拓扑是 **Pages + Worker 独立部署**。先复制 `.env.production.example` 为本地 `.env.production`。真实文件被 Git 忽略，避免不同部署环境的 Worker URL / Turnstile Site Key 污染仓库。
 
-Pages 部署统一通过根目录 `pnpm run deploy:pages`，它复用 `worker` 中锁定的 Wrangler；不要再用 `npx wrangler pages deploy` 临时拉取版本。
+`.env.production` 的 `VITE_WORKER_API_URL` 必须填写 Worker HTTPS 地址；空值只适用于已经额外配置了自定义域 `/api/*` Worker route 的部署，而仓库默认没有这层 route。
+
+Pages 部署统一通过根目录 `pnpm run deploy:pages`。它会先执行 production preflight + build，再复用 `worker` 中锁定的 Wrangler；不要再用 `npx wrangler pages deploy` 临时拉取版本。
 
 `preflight:cloudflare` 会通过 Wrangler 读取生产 Worker 的 Secret **名称**，确认 `PICKUP_CODE_SECRET`、`TURNSTILE_SECRET_KEY`、`ADMIN_PASSWORD` 都存在，再跑 production dry-run。它不会读取 Secret 值。非交互环境需要 `CLOUDFLARE_API_TOKEN`。
 
