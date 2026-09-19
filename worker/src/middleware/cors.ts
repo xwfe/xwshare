@@ -1,7 +1,7 @@
 import { cors } from 'hono/cors';
 
 export const corsMiddleware = cors({
-  origin: '*', 
+  origin: '*',
   allowHeaders: ['Content-Type', 'x-turnstile-token', 'Authorization', 'x-upload-token'],
-  allowMethods: ['POST', 'GET', 'PUT', 'OPTIONS'],
+  allowMethods: ['POST', 'GET', 'PUT', 'DELETE', 'OPTIONS'],
 });

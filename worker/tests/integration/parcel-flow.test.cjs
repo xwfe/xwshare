@@ -104,6 +104,22 @@ test('本地 Worker + D1 + R2 关键链路', { timeout: 45000 }, async (t) => {
     throw new Error(`${error.message}\n${stderr}`);
   });
 
+  await t.test('跨域管理删除的 CORS 预检允许 DELETE 和 Authorization', async () => {
+    const response = await fetch(`${baseUrl}/api/admin/parcels/example`, {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'https://app.example.test',
+        'Access-Control-Request-Method': 'DELETE',
+        'Access-Control-Request-Headers': 'authorization'
+      }
+    });
+
+    assert.equal(response.status, 204);
+    assert.equal(response.headers.get('access-control-allow-origin'), '*');
+    assert.match(response.headers.get('access-control-allow-methods') || '', /DELETE/);
+    assert.match(response.headers.get('access-control-allow-headers') || '', /Authorization/i);
+  });
+
   await t.test('文本寄件后可用规范化取件码取回', async () => {
     const { response: createResponse, body: created } = await createTextParcel(baseUrl);
     assert.equal(createResponse.status, 200);

@@ -61,10 +61,11 @@ pnpm dev
 
 ```bash
 pnpm build
-npx wrangler pages deploy dist --project-name xwshare
+pnpm run deploy:pages
 ```
 
 `pnpm build` 会先跑架构分层检查（`scripts/check-architecture.mjs`）和 `vue-tsc`。检查失败时构建直接停，不会出 `dist/`。
+`deploy:pages` 使用 `worker` 目录已经锁定的 Wrangler 版本，不再通过 `npx` 临时下载另一个版本。
 
 如果以后给自定义域配置了明确的 Worker `/api/*` route，可以再把 `VITE_WORKER_API_URL` 改回空值走同域；当前仓库没有这层生产 route，因此 preflight 会拒绝空值。
 

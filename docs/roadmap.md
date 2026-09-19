@@ -128,6 +128,7 @@
 
 - [x] 增加本地 production preflight，阻止 D1 占位 ID / 空 Turnstile Site Key 进入部署
 - [x] 增加 Cloudflare 远端 preflight，只核对必需 Secret 名称和 production dry-run
+- [x] 修正 Pages → Worker 跨域生产路径：CORS 允许管理 `DELETE`，Pages 部署复用锁定 Wrangler
 - [ ] GitHub `xwfe/xwshare` remote 可访问并推送当前本地提交
 - [ ] 填入真实 D1 `database_id`
 - [ ] 填入生产 `VITE_WORKER_API_URL`（当前 Pages + Worker 独立部署必须显式指向 Worker HTTPS 地址）

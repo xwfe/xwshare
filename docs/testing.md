@@ -40,7 +40,8 @@ pnpm test
 5. 验证文件登记、上传 token、R2 上传、确认、签名下载
 6. 验证阅后即焚首次成功、第二次拒绝
 7. 验证管理员未授权、登录、统计、列表、删除与 DELETED 查询
-8. 结束 Worker 并删除临时 state
+8. 验证跨域管理删除的 CORS 预检允许 `DELETE` + `Authorization`
+9. 结束 Worker 并删除临时 state
 
 它不会读取或污染日常 `worker/.wrangler/state`。
 

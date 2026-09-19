@@ -17,6 +17,7 @@
     "type-check": "vue-tsc --build --force",
     "check:architecture": "node scripts/check-architecture.mjs",
     "preflight:production": "node scripts/preflight-production.mjs",
+    "deploy:pages": "pnpm --dir worker exec wrangler pages deploy ../dist --project-name xwshare",
     "lint": "eslint . --fix",
     "format": "prettier --write src/"
   },
