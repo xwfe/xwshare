@@ -15,7 +15,7 @@
                          └─ R2  文件对象（经 Worker 中转，不是 R2 预签名直传）
 ```
 
-寄取件只走 `src/services/parcel.ts`（`fetch`）。`VITE_WORKER_API_URL` 为空时用相对路径 `/api`，开发环境由 Vite 反代到 8787。
+寄取件只走 `src/services/parcel.ts`（`fetch`）。开发环境 `VITE_WORKER_API_URL` 为空时用相对路径 `/api`，由 Vite 反代到 8787。当前生产基线是 Pages + Worker 独立部署，因此生产必须显式设置 Worker HTTPS 地址；只有未来明确配置同域 `/api/*` Worker route 后才能安全留空。
 
 Worker 挂了就报错，**不会**再回退到旧 API。寄取件和管理后台最小集都打 Worker。旧 axios 请求客户端和未使用的 multipart 辅助代码已经删除。
 

@@ -121,3 +121,19 @@
 ## 建议的下一轮
 
 阶段 5 的仓库侧工作已完成：自动回归、结构化日志、Workers Logs、Wrangler 维护升级、Rate Limiting 都已落地。下一轮进入生产部署复验；外部告警投递按实际 Cloudflare 账户和监控系统执行，不作为代码阶段阻塞项。
+
+---
+
+## 阶段 6：生产部署复验
+
+- [x] 增加本地 production preflight，阻止 D1 占位 ID / 空 Turnstile Site Key 进入部署
+- [x] 增加 Cloudflare 远端 preflight，只核对必需 Secret 名称和 production dry-run
+- [ ] GitHub `xwfe/xwshare` remote 可访问并推送当前本地提交
+- [ ] 填入真实 D1 `database_id`
+- [ ] 填入生产 `VITE_WORKER_API_URL`（当前 Pages + Worker 独立部署必须显式指向 Worker HTTPS 地址）
+- [ ] 填入生产 `VITE_TURNSTILE_SITE_KEY`
+- [ ] 非交互环境提供 `CLOUDFLARE_API_TOKEN`，远端 preflight 通过
+- [ ] 初始化 / 迁移生产 D1，部署 Worker 和 Pages
+- [ ] 生产 smoke：文本、文件、阅后即焚、管理后台、Rate Limiting、Workers Logs
+
+当前这套执行环境无法完成最后几项：GitHub remote 用现有 SSH 路径返回 `Repository not found` / 权限错误，且 Wrangler 非交互环境没有 `CLOUDFLARE_API_TOKEN`。这些属于外部账户状态，不在仓库中伪造。

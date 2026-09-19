@@ -70,6 +70,9 @@ pnpm exec wrangler secret put ADMIN_PASSWORD
 # Turnstile 生产必填，否则寄件 500，错误码 SERVER_MISCONFIGURED
 # 管理员口令生产必填，否则后台登录 500
 
+pnpm run preflight:cloudflare
+# 非交互环境需要 CLOUDFLARE_API_TOKEN；只检查 Secret 名称和 production dry-run
+
 pnpm run deploy
 ```
 

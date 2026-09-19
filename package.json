@@ -16,6 +16,7 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "check:architecture": "node scripts/check-architecture.mjs",
+    "preflight:production": "node scripts/preflight-production.mjs",
     "lint": "eslint . --fix",
     "format": "prettier --write src/"
   },

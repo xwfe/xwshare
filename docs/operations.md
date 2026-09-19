@@ -24,11 +24,19 @@ enabled = true
 部署前：
 
 ```bash
+pnpm run preflight:production
+
 cd worker
 pnpm test
 ./node_modules/.bin/tsc --noEmit
-./node_modules/.bin/wrangler deploy --dry-run --env=""
+pnpm run preflight:cloudflare
 ```
+
+`preflight:production` 只做本地静态检查：Node 版本、Git origin、D1 `database_id`、生产 Worker HTTPS 地址、Turnstile Site Key、Rate Limiting / Observability 配置。
+
+当前生产拓扑是 **Pages + Worker 独立部署**。因此 `.env.production` 的 `VITE_WORKER_API_URL` 必须填写 Worker HTTPS 地址；空值只适用于已经额外配置了自定义域 `/api/*` Worker route 的部署，而仓库默认没有这层 route。
+
+`preflight:cloudflare` 会通过 Wrangler 读取生产 Worker 的 Secret **名称**，确认 `PICKUP_CODE_SECRET`、`TURNSTILE_SECRET_KEY`、`ADMIN_PASSWORD` 都存在，再跑 production dry-run。它不会读取 Secret 值。非交互环境需要 `CLOUDFLARE_API_TOKEN`。
 
 部署后在 Cloudflare Dashboard 打开：
 
