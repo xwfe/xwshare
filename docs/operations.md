@@ -79,7 +79,7 @@ pnpm run ci:verify
 
 当前受保护的 `.github/workflows/release-please.yml` 仍使用 Node 20 + pnpm 9，并且只跑前端 build；当前 gld 工具禁止修改 `.github/workflows/*`，因此这一项必须在 GitHub / 具备 workflow 写权限的环境中修正。
 
-2026-09-19 已重新验证 `git ls-remote origin`：`xwfe/xwshare` remote 可访问，当前无 refs，属于空仓库状态。首次推送 `main` 后再以远端 Actions 结果复核 CI。
+2026-09-19 已完成 `xwfe/xwshare` 首次 `main` 推送，并建立本地 `main -> origin/main` upstream。首次推送前本地仓库是 shallow clone；从原始上游 `vastsa/FileCodeBoxFronted` 补全历史后，Git 对象完整性检查通过并成功推送。后续正常 `git push` 不再需要这一步。
 
 ## 3. 建议保存的查询
 

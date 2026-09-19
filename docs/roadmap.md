@@ -137,7 +137,7 @@
 - [x] `maxDownloads` 改为 D1 原子条件扣减，防止并发取件越过次数上限
 - [ ] 更新受保护 GitHub workflow：Node 22 / pnpm 11，并改为执行完整 `ci:verify`（当前工具无 workflow 写权限）
 - [x] GitHub `xwfe/xwshare` remote 已可访问（当前为空仓库，无 refs）
-- [ ] 首次推送本地 `main` 到 `xwfe/xwshare`
+- [x] 首次推送本地 `main` 到 `xwfe/xwshare`，并建立 upstream
 - [ ] 填入真实 D1 `database_id`
 - [ ] 填入生产 `VITE_WORKER_API_URL`（当前 Pages + Worker 独立部署必须显式指向 Worker HTTPS 地址）
 - [ ] 填入生产 `VITE_TURNSTILE_SITE_KEY`
@@ -145,4 +145,4 @@
 - [ ] 初始化 / 迁移生产 D1，部署 Worker 和 Pages
 - [ ] 生产 smoke：文本、文件、阅后即焚、管理后台、Rate Limiting、Workers Logs
 
-当前外部阻塞：gld 仍把 `.github/workflows/*` 视为 protected asset，无法在本会话更新旧 Node 20 / pnpm 9 workflow；Wrangler 非交互环境也没有 `CLOUDFLARE_API_TOKEN`。GitHub remote 本身已恢复可访问。
+当前外部阻塞：gld 仍把 `.github/workflows/*` 视为 protected asset，无法在本会话更新旧 Node 20 / pnpm 9 workflow；Wrangler 非交互环境也没有 `CLOUDFLARE_API_TOKEN`。GitHub remote 与 `main` 已正常建立。

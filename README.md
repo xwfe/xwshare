@@ -8,6 +8,8 @@
 
 仓库：`xwfe/xwshare`。维护者 / 作者统一使用 **xwfe**。
 
+`main` 已建立远端 upstream；提交前统一运行 `pnpm run ci:verify`。当前 GitHub workflow 仍待同步到 Node.js 22 / pnpm 11.20.0 的完整门禁。
+
 ---
 
 ## 本地怎么跑
