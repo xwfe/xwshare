@@ -1,6 +1,6 @@
 # 生产可观测性与运维
 
-本文记录 xwshare Worker 的生产日志、查询和外部告警接入边界。测试覆盖见 [testing.md](testing.md)，系统设计见 [../ARCHITECTURE.md](../ARCHITECTURE.md)。
+本文记录 xwshare Worker 的生产日志、查询和外部告警接入边界。部署流程见 [deployment.md](deployment.md)，测试覆盖见 [testing.md](testing.md)，系统设计见 [architecture.md](architecture.md)。
 
 ## 1. Workers Logs
 
@@ -21,34 +21,7 @@ enabled = true
 
 ## 2. 部署后检查
 
-部署前：
-
-```bash
-pnpm run preflight:production
-
-cd worker
-pnpm test
-./node_modules/.bin/tsc --noEmit
-pnpm run preflight:cloudflare
-
-cd ..
-pnpm build
-pnpm run deploy:pages
-```
-
-`preflight:production` 只做本地静态检查：Node 版本、Git origin、D1 `database_id`、生产 Worker HTTPS 地址、Turnstile Site Key、Rate Limiting / Observability 配置。
-
-当前生产拓扑是 **Pages + Worker 独立部署**。先复制 `.env.production.example` 为本地 `.env.production`。真实文件被 Git 忽略，避免不同部署环境的 Worker URL / Turnstile Site Key 污染仓库。
-
-`.env.production` 的 `VITE_WORKER_API_URL` 必须填写 Worker HTTPS 地址；空值只适用于已经额外配置了自定义域 `/api/*` Worker route 的部署，而仓库默认没有这层 route。
-
-Pages 部署统一通过根目录 `pnpm run deploy:pages`。它会先执行 production preflight + build，再复用 `worker` 中锁定的 Wrangler；不要再用 `npx wrangler pages deploy` 临时拉取版本。
-
-`preflight:cloudflare` 会通过 Wrangler 读取生产 Worker 的 Secret **名称**，确认 `PICKUP_CODE_SECRET`、`TURNSTILE_SECRET_KEY`、`ADMIN_PASSWORD` 都存在，再跑 production dry-run。它不会读取 Secret 值。非交互环境需要 `CLOUDFLARE_API_TOKEN`。
-
-Wrangler 不再维护单独的 `development` environment。本地开发统一由 `pnpm dev` 注入 `ENVIRONMENT=development`，生产始终使用顶层配置，避免 deploy / secret / D1 命令出现环境选择歧义。
-
-部署后在 Cloudflare Dashboard 打开：
+完整部署步骤见 [deployment.md](deployment.md)。部署完成后在 Cloudflare Dashboard 打开：
 
 `Workers & Pages → xwshare-worker → Observability`
 
@@ -66,20 +39,6 @@ pnpm exec wrangler tail
 ```
 
 实时日志适合部署后即时验证；长期查询使用 Workers Logs。
-
-## CI 门禁
-
-仓库已经提供统一入口：
-
-```bash
-pnpm run ci:verify
-```
-
-它按顺序执行前端 `pnpm build`、Worker typecheck、Worker 完整测试。目标 CI 基线是 Node.js 22 + pnpm 11.20.0。
-
-当前受保护的 `.github/workflows/release-please.yml` 仍使用 Node 20 + pnpm 9，并且只跑前端 build；当前 gld 工具禁止修改 `.github/workflows/*`，因此这一项必须在 GitHub / 具备 workflow 写权限的环境中修正。
-
-2026-09-19 已完成 `xwfe/xwshare` 首次 `main` 推送，并建立本地 `main -> origin/main` upstream。首次推送前本地仓库是 shallow clone；从原始上游 `vastsa/FileCodeBoxFronted` 补全历史后，Git 对象完整性检查通过并成功推送。后续正常 `git push` 不再需要这一步。
 
 ## 3. 建议保存的查询
 

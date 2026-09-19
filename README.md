@@ -1,126 +1,94 @@
 # xwshare
 
-匿名文件 / 文本快递柜。寄件人拿到 **6 位取件码**（大写字母 + 数字，不含 `0/O/1/I/L`），收件人输入取件码或打开分享链接即可取走。
+匿名文件 / 文本快递柜：寄件后生成 **6 位取件码**，收件人输入取件码或打开分享链接即可取走。
 
-前端是 Vue 3，后端是 Cloudflare Worker（Hono + D1 + R2）。当前运行时已经统一为 xwshare，不依赖旧后端。
+> Anonymous file and text drop box powered by Cloudflare Workers, D1 and R2.
 
-**现在只跑前端 + Worker 就能寄件、取件、进管理后台。** 后续计划见 [docs/roadmap.md](docs/roadmap.md)。
+xwshare 使用 **Vue 3 + Cloudflare Worker（Hono）+ D1 + R2**。前后端已经统一到 Worker，不依赖旧 Python 后端。
 
-仓库：`xwfe/xwshare`。维护者 / 作者统一使用 **xwfe**。
+## 核心能力
 
-`main` 已建立远端 upstream；提交前统一运行 `pnpm run ci:verify`。当前 GitHub workflow 仍待同步到 Node.js 22 / pnpm 11.20.0 的完整门禁。
+- 文本 / 文件寄取件，文件最大 100 MiB、文本最大 1 MiB
+- 6 位无歧义取件码，支持 1 小时 / 1 天 / 7 天有效期
+- 可选 AES-256-GCM 端到端加密、阅后即焚、最大取件次数
+- Turnstile、Cloudflare Rate Limiting、HMAC 凭证与管理员后台
+- Workers Logs、Cron 过期清理、D1 + R2 持久化
 
----
+## 本地使用
 
-## 本地怎么跑
-
-需要：Node.js 22+、pnpm 11+。仓库固定使用 pnpm 11.20.0，Worker 当前使用 Wrangler 4.x。
+需要 **Node.js 22+**、**pnpm 11+**；当前本地验证使用 pnpm 11.20.0。
 
 ```bash
 git clone https://github.com/xwfe/xwshare.git
 cd xwshare
+
 pnpm install
-cd worker && pnpm install && cd ..
+pnpm --dir worker install
+pnpm --dir worker run db:init:local
 ```
 
-先起 Worker（终端 1）。**第一次**要先建本地 D1 表，不建的话寄件会报 D1 表不存在，看着像 Worker 挂了，其实是库是空的：
+终端 1：
 
 ```bash
+pnpm --dir worker dev
+```
+
+终端 2：
+
+```bash
+pnpm dev
+```
+
+前端：`http://localhost:5173`；Worker：`http://127.0.0.1:8787`。本地管理员口令为 `xwshare-dev`。
+
+完整开发、迁移、测试与门禁说明见 [docs/development.md](docs/development.md)。
+
+## 生产配置
+
+当前生产基线是 **Cloudflare Pages + 独立 Worker**：
+
+1. 创建 D1 `xwshare-db` 和 R2 `xwshare-files`，把真实 D1 `database_id` 写入 `worker/wrangler.toml`。
+2. 复制 `.env.production.example` 为本地 `.env.production`，填写：
+   - `VITE_WORKER_API_URL`：已部署 Worker 的 HTTPS 地址
+   - `VITE_TURNSTILE_SITE_KEY`：生产 Turnstile Site Key
+3. 为 Worker 设置三个 Secret：
+   - `PICKUP_CODE_SECRET`：至少 32 字符
+   - `TURNSTILE_SECRET_KEY`
+   - `ADMIN_PASSWORD`
+4. 先执行本地 / Cloudflare preflight，再部署 Worker 和 Pages。
+
+```bash
+pnpm run preflight:production
+
 cd worker
-pnpm run db:init:local
-pnpm dev
-# http://127.0.0.1:8787
-```
+pnpm run db:init
+pnpm run preflight:cloudflare
+pnpm run deploy
 
-再起前端（终端 2）：
-
-```bash
-pnpm dev
-# http://localhost:5173
-# Vite 已把 /api 反代到 8787，所以 .env.development 里 VITE_WORKER_API_URL 留空即可
-```
-
-浏览器打开 `http://localhost:5173`。寄文本 / 文件、取件都走 Worker。右上角盾牌 / 登录图标进后台，口令是 **`xwshare-dev`**（`pnpm dev` 已经带上 `ADMIN_PASSWORD`）。未登录打开 `/#/admin` 会跳到登录页。
-
-如果 `pnpm run` 报 `ERR_PNPM_IGNORED_BUILDS`，不要跟那个提示去改安全策略；直接跑 `./node_modules/.bin/wrangler` / `./node_modules/.bin/vite`。
-
-本地 Turnstile 用的是 Cloudflare 官方测试 Site Key（`1x00000000000000000000AA`，永远通过）。Worker 在 `ENVIRONMENT=development` 时也会跳过人机验证。
-
----
-
-## 生产部署
-
-详细命令在 [worker/README.md](worker/README.md)，这里只写顺序和容易踩的坑。
-
-1. 在 Cloudflare 建 D1（库名 `xwshare-db`）和 R2（桶名 `xwshare-files`），把 `database_id` 填进 `worker/wrangler.toml`。
-2. 复制 `.env.production.example` 为本地 `.env.production`，填写已部署 Worker 的 HTTPS 地址（`VITE_WORKER_API_URL`）和真实 Turnstile Site Key。真实生产文件已被 Git 忽略，不把部署环境值写回仓库。
-3. 在仓库根目录跑 `pnpm run preflight:production`，占位配置没清干净时直接失败。
-4. 对**远程**库执行 `cd worker && pnpm run db:init`。只跑了 `db:init:local` 的话，生产寄件会报表不存在。
-5. 设置三个 Secret：`PICKUP_CODE_SECRET`（至少 32 字符的随机串，用来做 HMAC / token 根密钥）、`TURNSTILE_SECRET_KEY`、`ADMIN_PASSWORD`（后台登录口令，至少 6 位）。生产 Secret 缺失或不合规会 fail-closed，不会静默使用开发默认值。
-6. 非交互部署环境提供 `CLOUDFLARE_API_TOKEN` 后，运行 `cd worker && pnpm run preflight:cloudflare`，只核对 Secret 名称和 production dry-run。
-7. `cd worker && pnpm run deploy`。
-8. 回到根目录部署 Pages：
-
-```bash
+cd ..
 pnpm run deploy:pages
 ```
 
-`deploy:pages` 会先跑 production preflight 和完整 `pnpm build`，然后使用 `worker` 目录已经锁定的 Wrangler 版本部署，不再通过 `npx` 临时下载另一个版本。
+非交互环境运行 Cloudflare preflight / deploy 时需要提供 `CLOUDFLARE_API_TOKEN`，不要提交任何 Secret 或 Token。
 
-如果以后给自定义域配置了明确的 Worker `/api/*` route，可以再把 `VITE_WORKER_API_URL` 改回空值走同域；当前仓库没有这层生产 route，因此 preflight 会拒绝空值。
+完整生产部署、初始化、迁移和 smoke 流程见 [docs/deployment.md](docs/deployment.md)。
 
----
+## 文档
 
-## 测试
+- [开发与测试](docs/development.md)
+- [生产部署](docs/deployment.md)
+- [架构与安全模型](docs/architecture.md)
+- [测试边界](docs/testing.md)
+- [生产运维与可观测性](docs/operations.md)
+- [Roadmap](docs/roadmap.md)
+- [Worker API / 配置](worker/README.md)
 
-Worker 已有轻量自动回归，不额外引入测试框架：
+## Credits
 
-```bash
-cd worker
-pnpm test
-```
+前端界面与交互的大部分设计 / 实现来自 [vastsa/FileCodeBoxFronted](https://github.com/vastsa/FileCodeBoxFronted)。感谢原项目作者及贡献者。
 
-当前覆盖 7 个取件码 / 密钥单测，以及使用真实 Wrangler + 独立本地 D1/R2 的集成套件：文本寄取件、文件上传/确认/下载、阅后即焚、管理员登录/统计/列表/删除。测试数据写入临时 `.test-state-*` 后自动清理，不碰日常 `.wrangler/state`。
+xwshare 在此基础上继续重构为 Cloudflare Worker + D1 + R2 架构，并扩展安全、存储、管理与生产运维能力。
 
-仓库级完整门禁在根目录运行 `pnpm run ci:verify`：前端 build → Worker typecheck → Worker test。
+## License
 
-当前本地门禁基线为 Node.js 22 + pnpm 11.20.0。GitHub workflow 仍需同步到这套基线；在 workflow 更新完成前，提交/部署前以 `pnpm run ci:verify` 为完整验收入口。
-
-测试边界、日志事件和扩展规则见 [docs/testing.md](docs/testing.md)。
-
----
-
-## 现在有什么、没有什么
-
-有：
-
-- 文本 / 文件寄件，6 位取件码，过期时间只有 **1 小时 / 1 天 / 7 天** 三档。Worker 服务端强制文件最大 **100 MiB**、文本最大 **1 MiB**，不只依赖前端校验
-- 可选端到端加密（AES-256-GCM）。密钥在分享链接的 Hash 里：`/#/?code=AB3K7M&key=...`，浏览器不会把 `#` 后面的内容发给服务器
-- 阅后即焚、最大取件次数
-- 中 / 英界面、深浅色主题
-- 寄件记录存在浏览器本地，刷新还在，换设备没有
-- 管理后台最小集：登录、看今天寄了多少、按状态列出未删除快递、删除（文件会连 R2 一起删）
-
-没有（别按文档里的旧说法去找）：
-
-- **没有**旧后台那些边角：视图预设、批量策略、系统设置页、分片秒传
-- **没有** Service Worker，不能离线用。`public/manifest.json` 只让浏览器显示“可安装”
-- 自动回归已覆盖 Worker 安全基础、主要业务链路、并发阅后即焚、最大下载次数和 Cron 清理
-- 许可证为 **GPL-3.0**，见 [LICENSE](LICENSE)
-
-安全模型怎么工作、哪些地方还是空的，写在 [ARCHITECTURE.md](ARCHITECTURE.md)，不在这里重复。
-
----
-
-## 文档怎么分工
-
-| 文件 | 只写这件事 |
-| --- | --- |
-| 本 README | 怎么跑、怎么部署、当前能用什么 |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | 系统怎么工作、安全模型、已知缺口 |
-| [worker/README.md](worker/README.md) | Worker 目录、命令、环境变量、API |
-| [docs/testing.md](docs/testing.md) | 自动测试、结构化日志、验收边界 |
-| [docs/operations.md](docs/operations.md) | 生产日志、监控查询、告警接入边界 |
-| [docs/roadmap.md](docs/roadmap.md) | 后续计划 |
-
-`CHANGELOG.md` 留给 Release Please，现在还没打过正式版本。
+[GPL-3.0](LICENSE)

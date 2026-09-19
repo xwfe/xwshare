@@ -1,6 +1,6 @@
 # 测试与可观测性
 
-本文只记录自动回归和 Worker 日志约定。运行方式见 [README.md](../README.md)，系统设计见 [ARCHITECTURE.md](../ARCHITECTURE.md)。
+本文只记录自动回归和 Worker 日志约定。运行方式见 [development.md](development.md)，系统设计见 [architecture.md](architecture.md)。
 
 ## 1. 一条命令
 

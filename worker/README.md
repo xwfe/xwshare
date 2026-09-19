@@ -2,7 +2,7 @@
 
 寄件 / 取件 / 管理后台 API。Hono 跑在 Cloudflare Workers 上，短文本进 D1，文件经本进程写入 R2。
 
-怎么和前端一起本地联调，见仓库根目录 [README.md](../README.md)。架构和安全缺口见 [ARCHITECTURE.md](../ARCHITECTURE.md)。
+本地联调见 [docs/development.md](../docs/development.md)，生产部署见 [docs/deployment.md](../docs/deployment.md)，架构和安全边界见 [docs/architecture.md](../docs/architecture.md)。
 
 ---
 

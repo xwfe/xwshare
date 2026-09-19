@@ -1,6 +1,6 @@
 # 架构说明
 
-本文只写系统**现在实际怎么工作**，以及和宣传不符的地方。怎么跑见 [README.md](README.md)，下一步做什么见 [docs/roadmap.md](docs/roadmap.md)。
+本文只写系统**现在实际怎么工作**，以及和宣传不符的地方。开发入口见 [development.md](development.md)，下一步做什么见 [roadmap.md](roadmap.md)。
 
 ---
 
@@ -151,4 +151,4 @@ Worker 关键事件通过 `worker/src/utils/log.ts` 输出结构化对象，事�
 
 生产部署通过 `wrangler.toml` 开启 Workers Logs，保留 invocation logs，当前采样率为 100%。结构化日志直接输出对象，使 `event`、`reason`、`parcelId` 等字段可在 Workers Observability Query Builder 中直接过滤和聚合。这里只开启日志，不开启 traces。
 
-外部告警 / 日志投递属于 Cloudflare 账户和目标监控系统配置，不把 API Token、OTLP endpoint 或第三方凭据写进仓库。运维查询和接入边界见 [docs/operations.md](docs/operations.md)。
+外部告警 / 日志投递属于 Cloudflare 账户和目标监控系统配置，不把 API Token、OTLP endpoint 或第三方凭据写进仓库。运维查询和接入边界见 [operations.md](operations.md)。
