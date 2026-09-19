@@ -578,6 +578,36 @@ test('本地 Worker + D1 + R2 关键链路', { timeout: 45000 }, async (t) => {
     assert.equal(second.body.code, 'MAX_DOWNLOADS');
   });
 
+  await t.test('最大下载次数并发取件只有一个请求能成功扣减', async () => {
+    const ip = '198.51.100.32';
+    const { response: createResponse, body: created } = await createTextParcel(
+      baseUrl,
+      {
+        title: 'concurrent-max-downloads',
+        content: 'one retrieval only',
+        maxDownloads: 1
+      },
+      ip
+    );
+    assert.equal(createResponse.status, 200);
+
+    const pickup = () =>
+      jsonRequest(`${baseUrl}/api/pickup`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'CF-Connecting-IP': ip
+        },
+        body: JSON.stringify({ code: created.data.code })
+      });
+
+    const results = await Promise.all([pickup(), pickup()]);
+    const statuses = results.map(({ response }) => response.status).sort();
+    assert.deepEqual(statuses, [200, 403]);
+    const rejected = results.find(({ response }) => response.status === 403);
+    assert.equal(rejected.body.code, 'MAX_DOWNLOADS');
+  });
+
   await t.test('Cron 清理过期文件时同时标 DELETED 并删除 R2 对象', async () => {
     const ip = '198.51.100.23';
     const fileBody = 'cron should remove this object';

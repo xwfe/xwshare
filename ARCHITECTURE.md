@@ -53,7 +53,7 @@ Worker 挂了就报错，**不会**再回退到旧 API。寄取件和管理后�
 - 阅后即焚取件成功：`AVAILABLE → CLAIMED`
 - 定时任务每 15 分钟扫过期记录：删 R2，标 `DELETED`，清空 `content` / `file_key`
 
-并发取件：阅后即焚用 `UPDATE ... WHERE status='AVAILABLE'` 做 CAS。非阅后即焚只加 `download_count`。
+并发取件：阅后即焚用 `UPDATE ... WHERE status='AVAILABLE'` 做 CAS；设置 `max_downloads` 时，用 `UPDATE ... WHERE download_count < max_downloads` 原子扣减次数，避免并发越过上限。无限次数才直接递增计数。
 
 ---
 

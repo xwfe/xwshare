@@ -339,11 +339,6 @@ app.post('/api/pickup', rateLimitMiddleware, async (c) => {
     return c.json({ error: 'Parcel expired', code: 'EXPIRED' }, 403);
   }
 
-  if (parcel.max_downloads > 0 && parcel.download_count >= parcel.max_downloads) {
-    logEvent('warn', 'parcel.pickup.rejected', { parcelId: parcel.id, reason: 'max_downloads' });
-    return c.json({ error: 'Max downloads reached', code: 'MAX_DOWNLOADS' }, 403);
-  }
-
   if (parcel.burn_after_read === 1) {
     const result = await c.env.DB.prepare(
       `UPDATE parcels SET status = 'CLAIMED' WHERE id = ? AND status = 'AVAILABLE'`
@@ -354,11 +349,26 @@ app.post('/api/pickup', rateLimitMiddleware, async (c) => {
       logEvent('warn', 'parcel.pickup.rejected', { parcelId: parcel.id, reason: 'already_claimed' });
       return c.json({ error: 'Already claimed', code: 'CLAIMED' }, 403);
     }
+    await c.env.DB.prepare(`UPDATE parcels SET download_count = download_count + 1 WHERE id = ?`)
+      .bind(parcel.id)
+      .run();
+  } else if (parcel.max_downloads > 0) {
+    const result = await c.env.DB.prepare(
+      `UPDATE parcels
+       SET download_count = download_count + 1
+       WHERE id = ? AND status = 'AVAILABLE' AND download_count < max_downloads`
+    )
+      .bind(parcel.id)
+      .run();
+    if (!result.success || result.meta.changes === 0) {
+      logEvent('warn', 'parcel.pickup.rejected', { parcelId: parcel.id, reason: 'max_downloads' });
+      return c.json({ error: 'Max downloads reached', code: 'MAX_DOWNLOADS' }, 403);
+    }
+  } else {
+    await c.env.DB.prepare(`UPDATE parcels SET download_count = download_count + 1 WHERE id = ?`)
+      .bind(parcel.id)
+      .run();
   }
-
-  await c.env.DB.prepare(`UPDATE parcels SET download_count = download_count + 1 WHERE id = ?`)
-    .bind(parcel.id)
-    .run();
 
   if (parcel.type === 'file') {
     const storage = new R2Storage(requestOrigin(c), c.env.BUCKET);
