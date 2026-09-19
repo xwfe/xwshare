@@ -25,7 +25,7 @@ if (!process.env.CLOUDFLARE_API_TOKEN) {
   process.exit(1);
 }
 
-const secrets = run(['secret', 'list', '--format', 'json', '--env', '']);
+const secrets = run(['secret', 'list', '--format', 'json']);
 if (secrets.status !== 0) {
   console.error('Cloudflare 远端 preflight 无法读取 Secret 列表。');
   if (secrets.stderr.trim()) console.error(secrets.stderr.trim());
@@ -54,7 +54,7 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-const dryRun = run(['deploy', '--dry-run', '--env', '']);
+const dryRun = run(['deploy', '--dry-run']);
 if (dryRun.status !== 0) {
   console.error('Wrangler production dry-run 未通过。');
   if (dryRun.stderr.trim()) console.error(dryRun.stderr.trim());

@@ -44,6 +44,8 @@ Pages 部署统一通过根目录 `pnpm run deploy:pages`，它复用 `worker` �
 
 `preflight:cloudflare` 会通过 Wrangler 读取生产 Worker 的 Secret **名称**，确认 `PICKUP_CODE_SECRET`、`TURNSTILE_SECRET_KEY`、`ADMIN_PASSWORD` 都存在，再跑 production dry-run。它不会读取 Secret 值。非交互环境需要 `CLOUDFLARE_API_TOKEN`。
 
+Wrangler 不再维护单独的 `development` environment。本地开发统一由 `pnpm dev` 注入 `ENVIRONMENT=development`，生产始终使用顶层配置，避免 deploy / secret / D1 命令出现环境选择歧义。
+
 部署后在 Cloudflare Dashboard 打开：
 
 `Workers & Pages → xwshare-worker → Observability`

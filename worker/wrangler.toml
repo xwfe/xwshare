@@ -46,5 +46,3 @@ enabled = true
 
 # 本地请用 `pnpm dev`（脚本带 --var ENVIRONMENT:development）。
 # 不要把 ENVIRONMENT=development 写进顶层 [vars]，部署生产时会一起带上，Turnstile 就被跳过。
-[env.development.vars]
-ENVIRONMENT = "development"

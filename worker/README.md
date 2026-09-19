@@ -45,7 +45,7 @@ pnpm run typecheck
 pnpm test
 ```
 
-`pnpm dev` 会带 `--var ENVIRONMENT:development` 和本地管理员口令。只跑 `wrangler dev`、不带 `ENVIRONMENT` 时，没配 `TURNSTILE_SECRET_KEY` 会直接 500。`PICKUP_CODE_SECRET` 没配时，只有 development 才允许兜底，生产会 500。本地后台口令写在仓库根目录 [README.md](../README.md)。
+`pnpm dev` 会带 `--var ENVIRONMENT:development` 和本地管理员口令。Wrangler 不再定义额外的 named development environment；本地统一走这个脚本，生产统一走顶层配置。只跑 `wrangler dev`、不带 `ENVIRONMENT` 时，没配 `TURNSTILE_SECRET_KEY` 会直接 500。`PICKUP_CODE_SECRET` 没配时，只有 development 才允许兜底，生产会 500。本地后台口令写在仓库根目录 [README.md](../README.md)。
 
 `pnpm test` 先跑取件码 / HMAC / token 单测，再用独立 `.test-state-*` 启动真实 Wrangler + 本地 D1/R2，验证文本、文件、阅后即焚和管理后台主路径。详细边界见 [docs/testing.md](../docs/testing.md)。
 
