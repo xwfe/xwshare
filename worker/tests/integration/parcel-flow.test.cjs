@@ -563,4 +563,32 @@ test('本地 Worker + D1 + R2 关键链路', { timeout: 45000 }, async (t) => {
     assert.equal(limited.response.status, 429);
     assert.equal(limited.body.code, 'RATE_LIMIT_EXCEEDED');
   });
+
+  await t.test('管理员登录独立限速在第 6 次尝试返回 429', async () => {
+    const ip = '198.51.100.26';
+
+    for (let i = 0; i < 5; i++) {
+      const attempt = await jsonRequest(`${baseUrl}/api/admin/login`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'CF-Connecting-IP': ip
+        },
+        body: JSON.stringify({ password: 'wrong-password' })
+      });
+      assert.equal(attempt.response.status, 401);
+      assert.equal(attempt.body.code, 'UNAUTHORIZED');
+    }
+
+    const limited = await jsonRequest(`${baseUrl}/api/admin/login`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'CF-Connecting-IP': ip
+      },
+      body: JSON.stringify({ password: 'wrong-password' })
+    });
+    assert.equal(limited.response.status, 429);
+    assert.equal(limited.body.code, 'RATE_LIMIT_EXCEEDED');
+  });
 });

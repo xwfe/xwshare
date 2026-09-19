@@ -113,7 +113,12 @@ D1 库名、R2 桶名是 `xwshare-db` / `xwshare-files`，与 wrangler 绑定和
 | DELETE | `/api/admin/parcels/:id` | 无 | 标 DELETED，文件同时删 R2。要 Bearer |
 | GET | `/` | 无 | `{ status: 'ok', service: 'xwshare-worker' }` |
 
-限速加在寄件和取件上：Cloudflare `RATE_LIMITER` binding 对同一来源 IP 每分钟允许 10 次，超了返回 429 `RATE_LIMIT_EXCEEDED`。寄件和取件共享同一个 namespace / 额度。
+限速使用两个独立 Cloudflare Rate Limiting namespace：
+
+- `RATE_LIMITER`：寄件和取件共享，同一来源 IP 每分钟 10 次；
+- `ADMIN_RATE_LIMITER`：只保护管理员登录，同一来源 IP 每分钟 5 次。
+
+超限统一返回 429 `RATE_LIMIT_EXCEEDED`。两个 namespace 互不消耗额度。
 
 这是匿名服务目前能拿到的稳定来源标识，但 IP 限速会让共享 NAT / 移动网络下的多名用户共享额度。若未来增加账户或匿名设备身份，应优先把 limiter key 换成稳定用户 / 设备 ID，而不是继续依赖 IP。
 

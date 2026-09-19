@@ -95,12 +95,13 @@ Worker 挂了就报错，**不会**再回退到旧 API。寄取件和管理后�
 - 寄件接口：Turnstile 生产 fail-closed；开发环境 `ENVIRONMENT=development` 可跳过
 - 阅后即焚的 Claim 是原子更新
 - 管理员口令在 Worker Secret 里。登录签发 HMAC token（24 小时）；没带或过期的 `/api/admin/*` 返回 401
+- 管理员登录使用独立 Cloudflare Rate Limiting namespace，每 IP 每分钟 5 次，不与寄取件额度互相影响
 
 还弱的：
 
 | 说法 | 实际 |
 | --- | --- |
-| 边缘限速 | Cloudflare Rate Limiting binding，同一来源 IP 每分钟 10 次；计数按 Cloudflare location 生效且最终一致，不用于精确计费 |
+| 边缘限速 | 寄取件 10 次/分钟/IP，管理员登录独立 5 次/分钟/IP；计数按 Cloudflare location 生效且最终一致，不用于精确计费 |
 | 上传走预签名、不占 Worker | 上传仍走 Worker 代理，只是多了上传凭证 |
 
 ---

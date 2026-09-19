@@ -89,7 +89,7 @@ $workers.event.response.status >= 500
 event = "request.rate_limited"
 ```
 
-观察数量和时间分布。当前 limiter key 是来源 IP；共享 NAT / 移动网络可能让多人共享额度，因此不能仅凭此事件判断恶意用户。
+观察数量和时间分布，并按 `scope` 区分 `parcel` 与 `admin_login`。当前 limiter key 是来源 IP；共享 NAT / 移动网络可能让多人共享额度，因此不能仅凭此事件判断恶意用户。
 
 ### 取件失败
 

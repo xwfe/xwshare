@@ -21,6 +21,15 @@ namespace_id = "365411037"
   limit = 10
   period = 60
 
+[[ratelimits]]
+name = "ADMIN_RATE_LIMITER"
+# Separate namespace so admin login attempts do not consume parcel/pickup quota.
+namespace_id = "365411038"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60
+
 [triggers]
 crons = ["*/15 * * * *"]
 

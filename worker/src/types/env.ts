@@ -2,6 +2,7 @@ export interface Env {
   DB: D1Database;
   BUCKET: R2Bucket;
   RATE_LIMITER: RateLimit;
+  ADMIN_RATE_LIMITER: RateLimit;
   PICKUP_CODE_SECRET: string;
   TURNSTILE_SECRET_KEY: string;
   ADMIN_PASSWORD?: string;

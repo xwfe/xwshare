@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { Env } from '../types/env';
 import { adminAuthMiddleware } from '../middleware/admin-auth';
+import { adminRateLimitMiddleware } from '../middleware/rate-limit';
 import {
   getAdminPassword,
   getPickupSecret,
@@ -23,7 +24,7 @@ app.get('/api/config', (c) => {
   });
 });
 
-app.post('/api/admin/login', async (c) => {
+app.post('/api/admin/login', adminRateLimitMiddleware, async (c) => {
   const secret = getPickupSecret(c.env);
   const adminPassword = getAdminPassword(c.env);
   if (!secret || !adminPassword) {
