@@ -136,7 +136,8 @@
 - [x] 上线前输入边界加固：Worker 强制文件/文本大小、有效期/类型校验，上传 token 原子单次 claim，上传实际尺寸一致
 - [x] `maxDownloads` 改为 D1 原子条件扣减，防止并发取件越过次数上限
 - [ ] 更新受保护 GitHub workflow：Node 22 / pnpm 11，并改为执行完整 `ci:verify`（当前工具无 workflow 写权限）
-- [ ] GitHub `xwfe/xwshare` remote 可访问并推送当前本地提交
+- [x] GitHub `xwfe/xwshare` remote 已可访问（当前为空仓库，无 refs）
+- [ ] 首次推送本地 `main` 到 `xwfe/xwshare`
 - [ ] 填入真实 D1 `database_id`
 - [ ] 填入生产 `VITE_WORKER_API_URL`（当前 Pages + Worker 独立部署必须显式指向 Worker HTTPS 地址）
 - [ ] 填入生产 `VITE_TURNSTILE_SITE_KEY`
@@ -144,4 +145,4 @@
 - [ ] 初始化 / 迁移生产 D1，部署 Worker 和 Pages
 - [ ] 生产 smoke：文本、文件、阅后即焚、管理后台、Rate Limiting、Workers Logs
 
-当前这套执行环境无法完成最后几项：GitHub remote 用现有 SSH 路径返回 `Repository not found` / 权限错误，且 Wrangler 非交互环境没有 `CLOUDFLARE_API_TOKEN`。这些属于外部账户状态，不在仓库中伪造。
+当前外部阻塞：gld 仍把 `.github/workflows/*` 视为 protected asset，无法在本会话更新旧 Node 20 / pnpm 9 workflow；Wrangler 非交互环境也没有 `CLOUDFLARE_API_TOKEN`。GitHub remote 本身已恢复可访问。

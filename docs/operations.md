@@ -79,6 +79,8 @@ pnpm run ci:verify
 
 当前受保护的 `.github/workflows/release-please.yml` 仍使用 Node 20 + pnpm 9，并且只跑前端 build；当前 gld 工具禁止修改 `.github/workflows/*`，因此这一项必须在 GitHub / 具备 workflow 写权限的环境中修正。
 
+2026-09-19 已重新验证 `git ls-remote origin`：`xwfe/xwshare` remote 可访问，当前无 refs，属于空仓库状态。首次推送 `main` 后再以远端 Actions 结果复核 CI。
+
 ## 3. 建议保存的查询
 
 Workers Observability Query Builder 支持直接按结构化字段过滤，并可把常用查询保存到账户级。

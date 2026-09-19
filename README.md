@@ -82,6 +82,8 @@ pnpm test
 
 仓库级完整门禁在根目录运行 `pnpm run ci:verify`：前端 build → Worker typecheck → Worker test。
 
+当前本地门禁基线为 Node.js 22 + pnpm 11.20.0。GitHub workflow 仍需同步到这套基线；在 workflow 更新完成前，提交/部署前以 `pnpm run ci:verify` 为完整验收入口。
+
 测试边界、日志事件和扩展规则见 [docs/testing.md](docs/testing.md)。
 
 ---
