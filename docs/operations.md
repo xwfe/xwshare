@@ -67,6 +67,18 @@ pnpm exec wrangler tail
 
 实时日志适合部署后即时验证；长期查询使用 Workers Logs。
 
+## CI 门禁
+
+仓库已经提供统一入口：
+
+```bash
+pnpm run ci:verify
+```
+
+它按顺序执行前端 `pnpm build`、Worker typecheck、Worker 完整测试。目标 CI 基线是 Node.js 22 + pnpm 11.20.0。
+
+当前受保护的 `.github/workflows/release-please.yml` 仍使用 Node 20 + pnpm 9，并且只跑前端 build；当前 gld 工具禁止修改 `.github/workflows/*`，因此这一项必须在 GitHub / 具备 workflow 写权限的环境中修正。
+
 ## 3. 建议保存的查询
 
 Workers Observability Query Builder 支持直接按结构化字段过滤，并可把常用查询保存到账户级。

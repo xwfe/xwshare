@@ -1,6 +1,7 @@
 {
   "name": "xwshare-worker",
   "version": "1.0.0",
+  "packageManager": "pnpm@11.20.0",
   "author": "xwfe",
   "license": "GPL-3.0",
   "repository": {

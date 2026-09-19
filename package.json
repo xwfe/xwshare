@@ -2,6 +2,7 @@
   "name": "xwshare",
   "version": "2.4.0",
   "private": true,
+  "packageManager": "pnpm@11.20.0",
   "author": "xwfe",
   "license": "GPL-3.0",
   "repository": {
@@ -17,6 +18,7 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "check:architecture": "node scripts/check-architecture.mjs",
+    "ci:verify": "pnpm build && pnpm --dir worker run typecheck && pnpm --dir worker test",
     "preflight:production": "node scripts/preflight-production.mjs",
     "deploy:pages": "pnpm run build:production && pnpm --dir worker exec wrangler pages deploy ../dist --project-name xwshare",
     "lint": "eslint . --fix",

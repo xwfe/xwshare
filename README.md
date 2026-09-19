@@ -12,7 +12,7 @@
 
 ## 本地怎么跑
 
-需要：Node.js 22+、pnpm 8+。Worker 当前使用 Wrangler 4.x，Node 18 已不再满足其运行要求。
+需要：Node.js 22+、pnpm 11+。仓库固定使用 pnpm 11.20.0，Worker 当前使用 Wrangler 4.x。
 
 ```bash
 git clone https://github.com/xwfe/xwshare.git
@@ -79,6 +79,8 @@ pnpm test
 ```
 
 当前覆盖 7 个取件码 / 密钥单测，以及使用真实 Wrangler + 独立本地 D1/R2 的集成套件：文本寄取件、文件上传/确认/下载、阅后即焚、管理员登录/统计/列表/删除。测试数据写入临时 `.test-state-*` 后自动清理，不碰日常 `.wrangler/state`。
+
+仓库级完整门禁在根目录运行 `pnpm run ci:verify`：前端 build → Worker typecheck → Worker test。
 
 测试边界、日志事件和扩展规则见 [docs/testing.md](docs/testing.md)。
 
