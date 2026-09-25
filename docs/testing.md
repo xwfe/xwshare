@@ -92,12 +92,7 @@ pnpm test
 ## 5. 提交前门禁
 
 ```bash
-cd worker
-pnpm test
-./node_modules/.bin/tsc --noEmit
-
-cd ..
-pnpm build
+pnpm run ci:verify
 ```
 
-当前验收基线：单测覆盖输入边界、取件码、HMAC / token / Secret；本地集成套件覆盖文本 / 文件 / 服务端输入边界 / 一次性上传 token（含并发 claim）/ 阅后即焚（含并发 claim）/ 最大下载次数（含并发原子扣减）/ 管理后台（含文件 R2 删除）/ Cron 清理 / 两个 Rate Limiting 阈值；Worker typecheck 和根项目 build 通过。
+该命令也是 GitHub Actions 的统一门禁：前端架构检查 + Vue typecheck + production build、Worker typecheck、单测和本地 D1 / R2 集成测试必须全部通过。

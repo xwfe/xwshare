@@ -78,11 +78,6 @@ pnpm run ci:verify
 
 ## GitHub Actions
 
-当前远端 workflow 仍是历史的 frontend-only 构建。此前两个错误已经在本地复现并修正：
+`.github/workflows/release-please.yml` 与本地开发基线保持一致：Node.js 22、pnpm 11.20.0，并执行 `pnpm install --frozen-lockfile` 与 `pnpm run ci:verify`。
 
-1. workflow 显式安装 `pnpm 9.15.9`，同时根 `package.json` 又声明 `pnpm@11.20.0`；pnpm action 会把双版本声明直接判为配置错误。根包已移除精确 `packageManager` pin，Worker 仍固定 `pnpm@11.20.0`。
-2. pnpm 9 读取只有 `allowBuilds` 的 `pnpm-workspace.yaml` 时会报 `packages field missing or empty`。根目录与 Worker 的 workspace manifest 现在都显式声明 `packages: ['.']`。
-
-修正后已用 `pnpm 9.15.9 install --frozen-lockfile` + `pnpm 9.15.9 run build` 本地完整复现旧 workflow 路径，两个步骤均通过。
-
-完整仓库门禁仍以本地 `pnpm run ci:verify` 为准，后续应把 GitHub workflow 正式升级为 Node 22 / pnpm 11 并执行同一入口。
+本地与 GitHub CI 使用同一验证入口，不再维护 frontend-only 的第二套门禁。
