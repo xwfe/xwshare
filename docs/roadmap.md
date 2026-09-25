@@ -1,6 +1,6 @@
 # 后续计划
 
-更新日期：2026-09-19
+更新日期：2026-09-25
 
 这份文件是后续工作的唯一计划入口。怎么跑见 [development.md](development.md)，现状怎么工作见 [architecture.md](architecture.md)。
 
@@ -114,7 +114,7 @@
 - [x] 限速换 Cloudflare Rate Limiting binding，丢掉进程内 `Map`
 - [x] 开启 Cloudflare Workers Logs，结构化字段可直接查询，并补生产监控 runbook
 - [x] 明确外部告警 / OTLP / Logpush 为账户级部署动作，不把凭据或目标地址写入仓库
-- [x] Wrangler 升到 4.130.0、Workers Types 升到 5.20260908.1，并保持独立维护提交
+- [x] Wrangler 升到 4.137.0、Workers Types 升到 5.20260924.1，并完成前端同主版本依赖维护升级
 
 ---
 
@@ -136,7 +136,7 @@
 - [x] 修正旧 GitHub Actions 两个运行错误：pnpm 双版本声明冲突、pnpm 9 workspace 缺少 `packages`
 - [x] 上线前输入边界加固：Worker 强制文件/文本大小、有效期/类型校验，上传 token 原子单次 claim，上传实际尺寸一致
 - [x] `maxDownloads` 改为 D1 原子条件扣减，防止并发取件越过次数上限
-- [ ] 更新受保护 GitHub workflow：Node 22 / pnpm 11，并改为执行完整 `ci:verify`（当前工具无 workflow 写权限）
+- [x] 更新 GitHub workflow：Node 22 / pnpm 11.20.0，并改为执行完整 `ci:verify`
 - [x] GitHub `xwfe/xwshare` remote 已可访问并建立 `main`
 - [x] 首次推送本地 `main` 到 `xwfe/xwshare`，并建立 upstream
 - [ ] 填入真实 D1 `database_id`
@@ -146,4 +146,15 @@
 - [ ] 初始化 / 迁移生产 D1，部署 Worker 和 Pages
 - [ ] 生产 smoke：文本、文件、阅后即焚、管理后台、Rate Limiting、Workers Logs
 
-当前外部阻塞：gld 仍把 `.github/workflows/*` 视为 protected asset，无法在本会话更新旧 Node 20 / pnpm 9 workflow；Wrangler 非交互环境也没有 `CLOUDFLARE_API_TOKEN`。GitHub remote 与 `main` 已正常建立。
+当前外部阻塞：Wrangler 非交互环境没有 `CLOUDFLARE_API_TOKEN`，且生产 D1 / Pages / Turnstile 的真实配置仍待提供。GitHub remote 与 `main` 已正常建立。
+
+---
+
+## 阶段 7：依赖大版本迁移
+
+2026-09-25 已完成不跨主版本的依赖维护升级，并通过完整 `ci:verify`。以下项目需要按迁移任务单独处理，不能混入普通补丁升级：
+
+- [ ] `lucide-vue-next` 已弃用，迁移到 `@lucide/vue`
+- [ ] `vue-i18n` 9 已停止维护，迁移到 11
+- [ ] ESLint 9 已停止维护，评估并迁移 ESLint 10 与相关配置包
+- [ ] 统一评估 Vite 8、Tailwind CSS 4、Vue Router 5、Pinia 4、TypeScript 7 等破坏性升级；只有在迁移收益明确且测试覆盖足够时再进入实施
